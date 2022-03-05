@@ -1,12 +1,10 @@
 {
-  "name": "@idealjs/mono-template",
+  "name": "@idealjs/corn",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "license": "MIT",
-  "scripts": {
-    "build:prod": "rm -rf dist && webpack build --env production",
-    "build": "webpack",
-    "test": "jest"
+  "devDependencies": {
+    "@idealjs/corn-reactive": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@idealjs/corn-reactive": "^1.0.0"
   }
 }

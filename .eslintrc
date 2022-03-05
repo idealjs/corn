@@ -1,15 +1,9 @@
 {
-  "extends": ["react-app", "react-app/jest"],
-  "plugins": ["simple-import-sort"],
+  "extends": ["react-app"],
+  "plugins": ["simple-import-sort", "react"],
   "rules": {
-    "quotes": "warn",
     "simple-import-sort/imports": "warn",
     "simple-import-sort/exports": "warn",
-    "react-hooks/exhaustive-deps": [
-      1,
-      {
-        "enableDangerousAutofixThisMayCauseInfiniteLoops": true
-      }
-    ]
+    "@typescript-eslint/no-explicit-any": [1]
   }
 }

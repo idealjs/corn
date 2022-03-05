@@ -1,15 +1,14 @@
-import "./App.css";
+import Hello from "./components/Hello";
 
-import { moduleA } from "@idealjs/mono-template";
-import { useEffect, useRef } from "react";
-
-function App() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    console.log(ref.current!);
-    // new Chessboard(ref.current!);
-  }, []);
-  return <div className="App">hello {moduleA}</div>;
-}
+const list = ["a", "b", "c"];
+const App = () => {
+  return (
+    <div>
+      {list.map((i) => (
+        <Hello name={i} />
+      ))}
+    </div>
+  );
+};
 
 export default App;

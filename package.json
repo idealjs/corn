@@ -1,20 +1,31 @@
 {
-  "name": "@idealjs/mono-template",
+  "name": "@idealjs/corn",
   "private": true,
   "workspaces": [
     "packages/*",
     "example"
   ],
-  "repository": "git@github.com:idealjs/mono-template.git",
+  "repository": "git@github.com:idealjs/corn.git",
   "license": "MIT",
   "scripts": {
+    "lint": "eslint **/*.ts* --fix",
     "postinstall": "lerna bootstrap"
   },
   "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "eslint": "^8.10.0",
+    "eslint-config-react-app": "^7.0.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
+    "fork-ts-checker-webpack-plugin": "^7.2.1",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^27.5.1",
     "lerna": "^4.0.0",
-    "ts-jest": "^26.5.6",
+    "ts-jest": "^27.1.3",
+    "ts-loader": "^9.2.7",
+    "typescript": "^4.6.2",
+    "webpack": "^5.70.0",
     "webpack-bundle-analyzer": "^4.5.0",
-    "webpack-cli": "^4.9.1"
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
   }
 }
