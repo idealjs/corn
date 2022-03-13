@@ -1,72 +1,24 @@
 import Reactive from "../src/Reactive";
-import { FLAG,WithFlag } from "../src/type";
+import { FLAG, WithFlag } from "../src/type";
+
+const reactive = new Reactive();
 
 describe("createSignal test", () => {
-  test("test 1", () => {
-    const reactive = new Reactive();
-    reactive.createRoot(() => {
-      const [name, setName] = reactive.createSignal<string>();
-      const [result, setResult] = reactive.createSignal<string | undefined>(
-        name()
-      );
-      let count = 0;
-
-      reactive.createEffect(() => {
-        setResult(name());
-        count = count + 1;
-      });
-
-      expect(count).toBe(1);
-
-      const name1 = "world";
-      setName(name1);
-      expect(result()).toBe(name1);
-      expect(count).toBe(2);
-
-      const name2 = "world world";
-      setName(name2);
-      expect(result()).toBe(name2);
-      expect(count).toBe(3);
-    });
-  });
-  test("test 2", () => {
-    const reactive = new Reactive();
+  test("array Signal", () => {
     reactive.createRoot(() => {
       const [todos, setTodos] = reactive.createSignal<string[]>([]);
       const result: string[] = [];
-      {
-        const todo = Math.random().toFixed(2);
-        result.push(todo);
-        setTodos((todos) => {
-          return [...todos, todo];
-        });
-      }
-      {
-        const todo = Math.random().toFixed(2);
-        result.push(todo);
-        setTodos((todos) => {
-          return [...todos, todo];
-        });
-      }
-      {
-        const todo = Math.random().toFixed(2);
-        result.push(todo);
-        setTodos((todos) => {
-          return [...todos, todo];
-        });
-      }
-      {
-        const todo = Math.random().toFixed(2);
-        result.push(todo);
-        setTodos((todos) => {
-          return [...todos, todo];
-        });
-      }
+
+      const todo = Math.random().toFixed(2);
+      result.push(todo);
+      setTodos((todos) => {
+        return [...todos, todo];
+      });
+
       expect(todos()).toEqual(result);
     });
   });
   test("test 3", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [todos, setTodos] = reactive.createDiffSignal<WithFlag<string>[]>(
         []
@@ -99,7 +51,6 @@ describe("createSignal test", () => {
 
 describe("createEffect test", () => {
   test("test 1", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [name, setName] = reactive.createSignal<string>();
       const [result, setResult] = reactive.createSignal<string | undefined>(
@@ -141,7 +92,6 @@ describe("createEffect test", () => {
 
 describe("object test", () => {
   test("test 1", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [user, setUser] = reactive.createSignal<{ name: string }>();
       const [result, setResult] = reactive.createSignal<
@@ -173,7 +123,6 @@ describe("object test", () => {
 
 describe("batch test", () => {
   test("test 1", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [name, setName] = reactive.createSignal<string>();
       const [result, setResult] = reactive.createSignal<string | undefined>(
@@ -204,7 +153,6 @@ describe("batch test", () => {
 
 describe("nest test", () => {
   test("test 1", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [name, setName] = reactive.createSignal<string>();
       let count = 0;
@@ -230,7 +178,6 @@ describe("nest test", () => {
   });
 
   test("test 2", () => {
-    const reactive = new Reactive();
     reactive.createRoot(() => {
       const [name, setName] = reactive.createSignal<string>();
       let count = 0;

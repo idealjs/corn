@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal } from "@idealjs/corn-reactive";
+import { createEffect, createMemo, createSignal } from "@idealjs/corn";
 
 const Hello = (props: { name: string }) => {
   const { name } = props;
