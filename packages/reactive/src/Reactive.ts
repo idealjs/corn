@@ -130,9 +130,10 @@ class Reactive {
   public createSignal<T>(
     value?: T
   ): [ReadFunction<typeof value>, WriteFunction<typeof value>] {
+    let tmp: T | undefined = value;
+
     const root = this.roots[this.roots.length - 1];
     const effects = new Set<IEffect>();
-
     const proxy = new Proxy<{ value: typeof value }>(
       { value },
       Reactive.handler(effects, root)
@@ -144,9 +145,9 @@ class Reactive {
 
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {
-        proxy.value = nextValue(proxy.value);
+        proxy.value = tmp = nextValue(tmp);
       } else {
-        proxy.value = nextValue;
+        proxy.value = tmp = nextValue;
       }
     };
     return [read, write];
@@ -171,6 +172,8 @@ class Reactive {
     ReadFunction<WithFlag<T>[] | undefined>,
     WriteFunction<WithFlag<T>[] | undefined>
   ] {
+    let tmp: WithFlag<T>[] | undefined = value;
+
     const root = this.roots[this.roots.length - 1];
     const effects = new Set<IEffect>();
 
@@ -185,11 +188,11 @@ class Reactive {
 
     const write: WriteFunction<WithFlag<T>[] | undefined> = (nextValue) => {
       if (isSetFunction(nextValue)) {
-        proxy.value = nextValue(
-          proxy.value?.map((v) => ({ ...v, $flag: FLAG.NORMAL }))
+        proxy.value = tmp = nextValue(
+          tmp?.map((v) => ({ ...v, $flag: FLAG.NORMAL }))
         );
       } else {
-        proxy.value = nextValue;
+        proxy.value = tmp = nextValue;
       }
     };
     return [read, write];
