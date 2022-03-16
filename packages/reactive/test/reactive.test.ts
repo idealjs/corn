@@ -11,7 +11,7 @@ describe("createDiffSignal test", () => {
       );
       let array: string[] = [];
       reactive.createEffect(() => {
-        expect(todos().map((t) => t.data)).toEqual(array);
+        expect(todos().map((t) => t.data)).toStrictEqual(array);
       });
 
       const data1 = Math.random().toFixed(2);
@@ -30,7 +30,7 @@ describe("createDiffSignal test", () => {
       array = array.concat(data4);
       setTodos((todos) => [...todos, { $flag: FLAG.NEW, data: data4 }]);
 
-      expect(todos().map((t) => t.data)).toEqual(array);
+      expect(todos().map((t) => t.data)).toStrictEqual(array);
     });
   });
 });
@@ -61,60 +61,6 @@ describe("batch test", () => {
 
       expect(result()).toBe(name2);
       expect(count).toBe(2);
-    });
-  });
-});
-
-describe("nest test", () => {
-  test("test 1", () => {
-    reactive.createRoot(() => {
-      const [name, setName] = reactive.createSignal<string>();
-      let count = 0;
-
-      reactive.createEffect(() => {
-        name();
-        reactive.createEffect(() => {
-          name();
-          count = count + 1;
-        });
-      });
-
-      expect(count).toBe(1);
-
-      const name1 = "world";
-      setName(name1);
-      expect(count).toBe(3);
-
-      const name2 = "world world";
-      setName(name2);
-      expect(count).toBe(6);
-    });
-  });
-
-  test("test 2", () => {
-    reactive.createRoot(() => {
-      const [name, setName] = reactive.createSignal<string>();
-      let count = 0;
-
-      reactive.createEffect(() => {
-        name();
-        reactive.createRoot(() => {
-          reactive.createEffect(() => {
-            name();
-            count = count + 1;
-          });
-        });
-      });
-
-      expect(count).toBe(1);
-
-      const name1 = "world";
-      setName(name1);
-      expect(count).toBe(2);
-
-      const name2 = "world world";
-      setName(name2);
-      expect(count).toBe(3);
     });
   });
 });
