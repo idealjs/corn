@@ -76,3 +76,30 @@ describe("createEffect obj", () => {
     });
   });
 });
+
+describe("createEffect number set get", () => {
+  test("number signal", () => {
+    reactive.createRoot(() => {
+      const [signal, setSignal] = reactive.createSignal<number>(0);
+      const [signal2, setSignal2] = reactive.createSignal<number>(0);
+
+      reactive.createEffect((prev: number = -1) => {
+        console.log("1");
+        setSignal2((p) => p + 1);
+        console.log("2");
+        expect(signal()).toBe(prev + 1);
+        return signal();
+      });
+
+      reactive.createEffect((prev: number = 0) => {
+        console.log("3");
+        expect(signal2()).toBe(prev + 1);
+        return signal2();
+      });
+
+      setSignal(1);
+
+      console.log("test test");
+    });
+  });
+});
