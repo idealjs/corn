@@ -1,8 +1,7 @@
 export {
-  createDiffSignal,
-  createEffect,
-  createMemo,
-  createRoot,
-  createSignal,
+  useDiffSignal,
+  useEffect,
+  useMemo,
+  useSignal,
 } from "./src/lib/reactive";
 export { default as render } from "./src/lib/render";

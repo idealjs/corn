@@ -1,6 +1,6 @@
 import { ReadFunction } from "@idealjs/corn-reactive";
 
-import { createEffect, createRoot } from "./reactive";
+import { useEffect } from "./reactive";
 
 export type Primitive = number | string | boolean | symbol | null | undefined;
 export type CornText = number | string | boolean;
@@ -29,55 +29,53 @@ class CornElement {
   }
 
   public create(prevEl?: HTMLElement): HTMLElement {
-    return createRoot(() => {
-      if (this.type instanceof Function) {
-        const cornElement = this.type(this.props);
-        return createEffect((prevEl) => {
-          return cornElement.create(prevEl);
-        });
-      }
-      prevEl = prevEl == null ? document.createElement(this.type) : prevEl;
+    if (this.type instanceof Function) {
+      const cornElement = this.type(this.props);
+      return useEffect((prevEl) => {
+        return cornElement.create(prevEl);
+      });
+    }
+    prevEl = prevEl == null ? document.createElement(this.type) : prevEl;
 
-      //this.props.children may be not array,or CornElement or CornText or Other;
-      const children = this.props.children
-        ? this.props.children
-            .flatMap((child: Primitive | CornElement | ReadFunction) => {
-              if (isCornText(child)) {
-                return document.createTextNode(child.toString());
+    //this.props.children may be not array,or CornElement or CornText or Other;
+    const children = this.props.children
+      ? this.props.children
+          .flatMap((child: Primitive | CornElement | ReadFunction) => {
+            if (isCornText(child)) {
+              return document.createTextNode(child.toString());
+            }
+            if (child instanceof CornElement) {
+              return child.create();
+            }
+            if (child instanceof Function) {
+              const res = child();
+              if (isCornText(res)) {
+                return document.createTextNode(res.toString());
               }
-              if (child instanceof CornElement) {
-                return child.create();
+              if (res instanceof CornElement) {
+                return res.create();
               }
-              if (child instanceof Function) {
-                const res = child();
-                if (isCornText(res)) {
-                  return document.createTextNode(res.toString());
-                }
-                if (res instanceof CornElement) {
-                  return res.create();
-                }
-                if (Array.isArray(res)) {
-                  return res.map((r) => r.create());
-                }
+              if (Array.isArray(res)) {
+                return res.map((r) => r.create());
               }
-              console.warn("[warn] skip create", child, typeof child);
-              return null;
-            })
-            .filter(
-              (
-                c: HTMLElement | Text | undefined | null
-              ): c is HTMLElement | Text => c != null
-            )
-        : null;
+            }
+            console.warn("[warn] skip create", child, typeof child);
+            return null;
+          })
+          .filter(
+            (
+              c: HTMLElement | Text | undefined | null
+            ): c is HTMLElement | Text => c != null
+          )
+      : null;
 
-      this.upsert(prevEl, children, null);
+    this.upsert(prevEl, children, null);
 
-      if (this.props.onClick && prevEl instanceof Element) {
-        Reflect.set(prevEl, "onclick", this.props.onClick);
-      }
+    if (this.props.onClick && prevEl instanceof Element) {
+      Reflect.set(prevEl, "onclick", this.props.onClick);
+    }
 
-      return prevEl;
-    });
+    return prevEl;
   }
 
   upsert(

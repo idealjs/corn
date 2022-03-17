@@ -24,13 +24,19 @@ const isSetFunction = <T>(v: T | ((d: T) => T)): v is (d: T) => T => {
 
 //Publish–subscribe pattern
 class Reactive {
-  private roots: IRoot[] = [];
+  private root: IRoot = {
+    effects: [],
+    batch: {
+      pending: false,
+      effects: new Set(),
+    },
+  };
+
   constructor() {
-    this.createRoot = this.createRoot.bind(this);
-    this.createSignal = this.createSignal.bind(this);
-    this.createDiffSignal = this.createDiffSignal.bind(this);
-    this.createMemo = this.createMemo.bind(this);
-    this.createEffect = this.createEffect.bind(this);
+    this.useSignal = this.useSignal.bind(this);
+    this.useDiffSignal = this.useDiffSignal.bind(this);
+    this.useMemo = this.useMemo.bind(this);
+    this.useEffect = this.useEffect.bind(this);
   }
   private static handler = (effects: Set<IEffect>, root: IRoot) => ({
     get(target: object, p: string | symbol, receiver: unknown) {
@@ -106,33 +112,19 @@ class Reactive {
     };
   };
 
-  public createRoot = <T>(fn: () => T): T => {
-    const root: IRoot = {
-      effects: [],
-      batch: {
-        pending: false,
-        effects: new Set<IEffect>(),
-      },
-    };
-    this.roots.push(root);
-    const res = fn();
-    this.roots.pop();
-    return res;
-  };
-
-  public createSignal<T>(): [
+  public useSignal<T>(): [
     ReadFunction<T | undefined>,
     WriteFunction<T | undefined>
   ];
 
-  public createSignal<T>(value: T): [ReadFunction<T>, WriteFunction<T>];
+  public useSignal<T>(value: T): [ReadFunction<T>, WriteFunction<T>];
 
-  public createSignal<T>(
+  public useSignal<T>(
     value?: T
   ): [ReadFunction<typeof value>, WriteFunction<typeof value>] {
     let tmp: T | undefined = value;
 
-    const root = this.roots[this.roots.length - 1];
+    const root = this.root;
     const effects = new Set<IEffect>();
     const proxy = new Proxy<{ value: typeof value }>(
       { value },
@@ -153,7 +145,7 @@ class Reactive {
     return [read, write];
   }
 
-  public createDiffSignal<
+  public useDiffSignal<
     TA extends WithFlag<unknown>[],
     T = ExtractArray<TA>
   >(): [
@@ -161,11 +153,11 @@ class Reactive {
     WriteFunction<WithFlag<T>[] | undefined>
   ];
 
-  public createDiffSignal<TA extends WithFlag<unknown>[]>(
+  public useDiffSignal<TA extends WithFlag<unknown>[]>(
     value: TA
   ): [ReadFunction<typeof value>, WriteFunction<typeof value>];
 
-  public createDiffSignal<TA extends WithFlag<unknown>[], T = ExtractArray<TA>>(
+  public useDiffSignal<TA extends WithFlag<unknown>[], T = ExtractArray<TA>>(
     value?: WithFlag<T>[] | undefined,
     compare: Compare<WithFlag<T>> = (p, n) => p.data === n.data
   ): [
@@ -174,7 +166,7 @@ class Reactive {
   ] {
     let tmp: WithFlag<T>[] | undefined = value;
 
-    const root = this.roots[this.roots.length - 1];
+    const root = this.root;
     const effects = new Set<IEffect>();
 
     const proxy = new Proxy<{ value: WithFlag<T>[] | undefined }>(
@@ -198,9 +190,9 @@ class Reactive {
     return [read, write];
   }
 
-  public createMemo<T>(fn: (prev?: T) => T) {
-    const [state, setState] = this.createSignal<T>();
-    this.createEffect<T>((prev) => {
+  public useMemo<T>(fn: (prev?: T) => T) {
+    const [state, setState] = this.useSignal<T>();
+    this.useEffect<T>((prev) => {
       const value = fn(prev);
       if (value !== prev) {
         setState(value);
@@ -210,8 +202,8 @@ class Reactive {
     return state;
   }
 
-  public createEffect = <T>(fn: (prev?: T) => T) => {
-    const root = this.roots[this.roots.length - 1];
+  public useEffect = <T>(fn: (prev?: T) => T) => {
+    const root = this.root;
     const effect: IEffect<T> = {
       fn,
     };
@@ -222,7 +214,7 @@ class Reactive {
   };
 
   public batch = (fn: () => void) => {
-    const root = this.roots[this.roots.length - 1];
+    const root = this.root;
     root.batch.pending = true;
     fn();
     root.batch.pending = false;
