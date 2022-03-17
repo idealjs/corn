@@ -33,8 +33,8 @@ describe("useDiffSignal test", () => {
 
 describe("batch test", () => {
   test("test 1", () => {
-    const [name, setName] = reactive.useSignal<string>();
-    const [result, setResult] = reactive.useSignal<string | undefined>(name());
+    const [name, setName] = reactive.createSignal<string>();
+    const [result, setResult] = reactive.createSignal<string | undefined>(name());
     let count = 0;
 
     reactive.useEffect(() => {

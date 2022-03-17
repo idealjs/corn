@@ -33,7 +33,7 @@ class Reactive {
   };
 
   constructor() {
-    this.useSignal = this.useSignal.bind(this);
+    this.createSignal = this.createSignal.bind(this);
     this.useDiffSignal = this.useDiffSignal.bind(this);
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
@@ -41,6 +41,7 @@ class Reactive {
   private static handler = (effects: Set<IEffect>, root: IRoot) => ({
     get(target: object, p: string | symbol, receiver: unknown) {
       const effect = root.effects[root.effects.length - 1];
+      console.log("test test", root.effects);
       if (effect != null) {
         effects.add(effect);
       }
@@ -112,14 +113,14 @@ class Reactive {
     };
   };
 
-  public useSignal<T>(): [
+  public createSignal<T>(): [
     ReadFunction<T | undefined>,
     WriteFunction<T | undefined>
   ];
 
-  public useSignal<T>(value: T): [ReadFunction<T>, WriteFunction<T>];
+  public createSignal<T>(value: T): [ReadFunction<T>, WriteFunction<T>];
 
-  public useSignal<T>(
+  public createSignal<T>(
     value?: T
   ): [ReadFunction<typeof value>, WriteFunction<typeof value>] {
     let tmp: T | undefined = value;
@@ -191,7 +192,7 @@ class Reactive {
   }
 
   public useMemo<T>(fn: (prev?: T) => T) {
-    const [state, setState] = this.useSignal<T>();
+    const [state, setState] = this.createSignal<T>();
     this.useEffect<T>((prev) => {
       const value = fn(prev);
       if (value !== prev) {
@@ -209,6 +210,7 @@ class Reactive {
     };
     root.effects.push(effect);
     effect.prev = fn(effect.prev);
+    console.log("test test before pop useEffect", root.effects);
     root.effects.pop();
     return effect.prev;
   };

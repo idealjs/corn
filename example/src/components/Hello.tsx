@@ -1,11 +1,11 @@
-import { useMemo, useEffect, useSignal } from "@idealjs/corn";
+import { useMemo, useEffect, createSignal } from "@idealjs/corn";
 
 const Hello = (props: { name: string }) => {
   const { name } = props;
 
-  const [state, setState] = useSignal(true);
+  const [state, setState] = createSignal(true);
 
-  const [todos, setTodos] = useSignal<boolean[]>([]);
+  const [todos, setTodos] = createSignal<boolean[]>([]);
 
   const todosDiv = useMemo(() => {
     return todos().map((todo) => {

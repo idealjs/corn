@@ -4,7 +4,7 @@ const reactive = new Reactive();
 
 describe("useEffect nest", () => {
   test("nested useEffect", () => {
-    const [name, setName] = reactive.useSignal<string>();
+    const [name, setName] = reactive.createSignal<string>();
     let count = 0;
 
     reactive.useEffect(() => {
