@@ -1,4 +1,4 @@
-import { useMemo, useEffect, createSignal } from "@idealjs/corn";
+import { createSignal, useEffect, useMemo } from "@idealjs/corn";
 
 const Hello = (props: { name: string }) => {
   const { name } = props;
@@ -9,12 +9,7 @@ const Hello = (props: { name: string }) => {
 
   const todosDiv = useMemo(() => {
     return todos().map((todo) => {
-      return (
-        <div>
-          {todo}
-          {todo}
-        </div>
-      );
+      return <div>test {todo}</div>;
     });
   });
 

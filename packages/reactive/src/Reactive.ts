@@ -1,6 +1,7 @@
 import reconcile from "./reconcile";
 import { Compare, ExtractArray, FLAG, WithFlag } from "./type";
 
+export const IS_REACTIVE_READ = "IS_REACTIVE_READ";
 export type ReadFunction<T = unknown> = () => T;
 export type WriteFunction<T = unknown> = (
   next: T | ((preValue: T) => T)
@@ -135,6 +136,7 @@ class Reactive {
     const read: ReadFunction<typeof value> = () => {
       return proxy.value;
     };
+    Reflect.defineProperty(read, IS_REACTIVE_READ, { value: true });
 
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {
@@ -210,7 +212,6 @@ class Reactive {
     };
     root.effects.push(effect);
     effect.prev = fn(effect.prev);
-    console.log("test test before pop useEffect", root.effects);
     root.effects.pop();
     return effect.prev;
   };

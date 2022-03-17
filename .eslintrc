@@ -3,6 +3,7 @@
   "plugins": ["simple-import-sort", "react"],
   "rules": {
     "react-hooks/rules-of-hooks": [0],
+    "react-hooks/exhaustive-deps": [0],
     "simple-import-sort/imports": "warn",
     "simple-import-sort/exports": "warn",
     "@typescript-eslint/no-explicit-any": [1]
