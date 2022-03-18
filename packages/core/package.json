@@ -1,10 +1,14 @@
 {
   "name": "@idealjs/corn",
   "version": "1.0.0",
+  "scripts": {
+    "test": "jest"
+  },
   "devDependencies": {
     "@idealjs/corn-reactive": "^1.0.0"
   },
   "peerDependencies": {
     "@idealjs/corn-reactive": "^1.0.0"
-  }
+  },
+  "dependencies": {}
 }
