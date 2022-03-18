@@ -11,16 +11,17 @@ const reconcile = <T>(
 
   let tmp: WithFlag<T>[] = [];
 
-  for (let pIndex = 0; pIndex < p.length; pIndex++) {
+  loop1: for (let pIndex = 0; pIndex < p.length; pIndex++) {
     for (let nIndex = nStart; nIndex < n.length; nIndex++) {
       if (compare(p[pIndex], n[nIndex])) {
         //found in next,set flat to normal
         tmp = tmp
           .concat(n.slice(nStart, nIndex))
-          .concat(n.slice(nIndex, nIndex + 1));
+          .concat(p.slice(pIndex, pIndex + 1));
+
         nStart = nIndex + 1;
 
-        break;
+        continue loop1;
       } else if (nIndex === nEnd - 1) {
         //not found in next,set flag to remove
         tmp = tmp.concat({ ...p[pIndex], $flag: FLAG.REMOVED });

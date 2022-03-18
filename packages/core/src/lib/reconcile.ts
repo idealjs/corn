@@ -29,6 +29,19 @@ const reconcile = <P extends {} = {}, N extends {} = {}>(
       if (compare(p[pIndex], n[nIndex])) {
         //found in next,set flat to using
         tmp = tmp.concat(
+          n.slice(nStart, nIndex).map((v) => {
+            const succ = Reflect.defineProperty(v, RECONCILE_FLAG, {
+              value: FLAG.ADDING,
+              writable: true,
+            });
+            if (!succ) {
+              throw new Error("define RECONCILE_FLAG faild");
+            }
+            return v;
+          })
+        );
+
+        tmp = tmp.concat(
           p.slice(pIndex, pIndex + 1).map((v) => {
             const succ = Reflect.defineProperty(v, RECONCILE_FLAG, {
               value: FLAG.USING,
@@ -40,6 +53,7 @@ const reconcile = <P extends {} = {}, N extends {} = {}>(
             return v;
           })
         );
+
         nStart = nIndex + 1;
 
         continue loop1;
