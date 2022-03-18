@@ -16,9 +16,49 @@ interface IEvents {
   onClick?: () => void;
 }
 
+type Child = Primitive | CornElement | ReadFunction | Child[];
+
+export const CORN_ELEMENT_KEY = "CORN_ELEMENT_KEY";
+
 export interface Props extends IEvents {
-  children?: Array<Primitive | CornElement | ReadFunction>;
+  children?: Child[];
 }
+
+const handleChildren = (parent: Element, children: Child[]) => {
+  children?.forEach((child) => {
+    if (isCornText(child)) {
+      parent.append(document.createTextNode(child.toString()));
+    }
+    if (child instanceof CornElement) {
+      parent.append(child.create());
+    }
+    if (child instanceof Function) {
+      if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
+        useEffect<Text | Element | Element[] | undefined>((prev) => {
+          const res = child();
+          if (isCornText(res)) {
+            if (prev == null) {
+              const text = document.createTextNode(res.toString());
+              parent.append(text);
+              return text;
+            }
+            if (!(prev instanceof Array)) {
+              prev.nodeValue = res.toString();
+            }
+            return prev;
+          }
+          if (res instanceof Array && prev instanceof Array) {
+          }
+        });
+      }
+    }
+    if (child instanceof Array) {
+      handleChildren(parent, child);
+    }
+    console.warn("[warn] skip create", child, typeof child);
+    return null;
+  });
+};
 
 class CornElement {
   private type: string | ((props: Props) => CornElement);
@@ -35,84 +75,15 @@ class CornElement {
     }
     const element = document.createElement(this.type);
 
-    this.props.children?.forEach(
-      (child: Primitive | CornElement | ReadFunction) => {
-        if (isCornText(child)) {
-          element.append(document.createTextNode(child.toString()));
-        }
-        if (child instanceof CornElement) {
-          element.append(child.create());
-        }
-        if (child instanceof Function) {
-          if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)) {
-            useEffect<Text | undefined>((prev) => {
-              const res = child();
-              if (isCornText(res)) {
-                if (prev == null) {
-                  const text = document.createTextNode(res.toString());
-                  element.append(text);
-                  return text;
-                }
-                prev.nodeValue = res.toString();
-                return prev;
-              }
-            });
-          }
-        }
-        console.warn("[warn] skip create", child, typeof child);
-        return null;
-      }
-    );
+    if (this.props.children) {
+      handleChildren(element, this.props.children);
+    }
 
     if (this.props.onClick) {
       Reflect.set(element, "onclick", this.props.onClick);
     }
 
     return element;
-  }
-
-  upsert(
-    parent: Element,
-    value: Node[] | Node | string | null,
-    current: Node[] | Node | string | null
-  ) {
-    console.debug("[debug] upsert", parent, value, current);
-    if (value === current) {
-      return value;
-    }
-
-    if (value == null) {
-      parent.textContent = "";
-      return value;
-    }
-
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
-      parent.textContent = value.toString();
-      return value;
-    }
-
-    if (value instanceof Node) {
-      if (current instanceof Node) {
-        parent.replaceChild(value, current);
-        return value;
-      }
-      parent.textContent = "";
-      parent.append(value);
-      return value;
-    }
-
-    if (Array.isArray(value)) {
-      parent.textContent = "";
-      parent.append(...value);
-      return value;
-    }
-
-    console.log(`[Warn] Skipped inserting ${value}`);
-    return current;
   }
 }
 

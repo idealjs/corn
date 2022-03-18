@@ -8,8 +8,8 @@ const Hello = (props: { name: string }) => {
   const [todos, setTodos] = createSignal<boolean[]>([]);
 
   const todosDiv = useMemo(() => {
-    return todos().map((todo) => {
-      return <div>test {todo}</div>;
+    return todos().map((todo, index) => {
+      return <div key={index}>test {todo}</div>;
     });
   });
 
@@ -38,6 +38,9 @@ const Hello = (props: { name: string }) => {
         <button onClick={onClick}>
           {"test"} {"button"}
         </button>
+        {todos().map((todo) => {
+          return <div>test {todo}</div>;
+        })}
         {todosDiv}
       </div>
       <div>state {state}</div>
