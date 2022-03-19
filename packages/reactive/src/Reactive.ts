@@ -1,6 +1,3 @@
-import reconcile from "./reconcile";
-import { ExtractArray, FLAG } from "./type";
-
 export const IS_REACTIVE_READ = "IS_REACTIVE_READ";
 export type ReadFunction<T = unknown> = () => T;
 export type WriteFunction<T = unknown> = (
@@ -35,7 +32,6 @@ class Reactive {
 
   constructor() {
     this.createSignal = this.createSignal.bind(this);
-    this.createDiffSignal = this.createDiffSignal.bind(this);
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
   }
@@ -68,44 +64,6 @@ class Reactive {
     },
   });
 
-  private static diffHandler = <T>(effects: Set<IEffect>, root: IRoot) => {
-    return {
-      get(
-        target: { value: T[] | undefined },
-        p: string | symbol,
-        receiver: unknown
-      ): T[] | undefined {
-        const effect = root.effects[root.effects.length - 1];
-        if (effect != null) {
-          effects.add(effect);
-        }
-        return Reflect.get(target, p, receiver);
-      },
-      set: (
-        target: { value: T[] },
-        p: string | symbol,
-        value: T[],
-        receiver: unknown
-      ) => {
-        const prev: T[] = Reflect.get(target, p, receiver) as T[];
-
-        const next = reconcile(prev, value);
-
-        Reflect.set(target, p, next, receiver);
-        for (const effect of [...effects]) {
-          root.effects.push(effect);
-          if (root.batch.pending) {
-            root.batch.effects.add(effect);
-          } else {
-            effect.prev = effect.fn(effect.prev);
-          }
-          root.effects.pop();
-        }
-        return true;
-      },
-    };
-  };
-
   public createSignal<T>(): [
     ReadFunction<T | undefined>,
     WriteFunction<T | undefined>
@@ -133,44 +91,6 @@ class Reactive {
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {
         proxy.value = tmp = nextValue(tmp);
-      } else {
-        proxy.value = tmp = nextValue;
-      }
-    };
-    return [read, write];
-  }
-
-  public createDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(): [
-    ReadFunction<T[] | undefined>,
-    WriteFunction<T[] | undefined>
-  ];
-
-  public createDiffSignal<TA extends unknown[]>(
-    value: TA
-  ): [ReadFunction<typeof value>, WriteFunction<typeof value>];
-
-  public createDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(
-    value?: T[] | undefined
-  ): [ReadFunction<T[] | undefined>, WriteFunction<T[] | undefined>] {
-    let tmp: T[] | undefined = value;
-
-    const root = this.root;
-    const effects = new Set<IEffect>();
-
-    const proxy = new Proxy<{ value: T[] | undefined }>(
-      { value },
-      Reactive.diffHandler(effects, root)
-    );
-
-    const read: ReadFunction<T[] | undefined> = () => {
-      return proxy.value;
-    };
-
-    const write: WriteFunction<T[] | undefined> = (nextValue) => {
-      if (isSetFunction(nextValue)) {
-        proxy.value = tmp = nextValue(
-          tmp?.map((v) => ({ ...v, $flag: FLAG.NORMAL }))
-        );
       } else {
         proxy.value = tmp = nextValue;
       }
