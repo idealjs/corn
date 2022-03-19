@@ -1,8 +1,5 @@
-import reconcile, {
-  FLAG,
-  RECONCILE_FLAG,
-  RECONCILE_KEY,
-} from "../src/reconcile";
+import { CORN_ELEMENT_KEY } from "../src/lib/CornElement";
+import reconcile, { FLAG, RECONCILE_FLAG } from "../src/lib/reconcile";
 
 describe("reconcile", () => {
   test("even index keep", () => {
@@ -12,7 +9,7 @@ describe("reconcile", () => {
     });
 
     const prev = seed.map((s) => {
-      Reflect.defineProperty(s, RECONCILE_KEY, {
+      Reflect.defineProperty(s, CORN_ELEMENT_KEY, {
         value: s.index,
       });
       Reflect.defineProperty(s, RECONCILE_FLAG, {
@@ -32,9 +29,9 @@ describe("reconcile", () => {
     //   res.map((r) => {
     //     return {
     //       ...r,
-    //       [RECONCILE_KEY]: Reflect.getOwnPropertyDescriptor(
+    //       [CORN_ELEMENT_KEY]: Reflect.getOwnPropertyDescriptor(
     //         r,
-    //         RECONCILE_KEY
+    //         CORN_ELEMENT_KEY
     //       )?.value,
     //       [RECONCILE_FLAG]: Reflect.getOwnPropertyDescriptor(r, RECONCILE_FLAG)
     //         ?.value,
@@ -84,7 +81,7 @@ describe("reconcile", () => {
     });
 
     const prev = seed.map((s) => {
-      Reflect.defineProperty(s, RECONCILE_KEY, {
+      Reflect.defineProperty(s, CORN_ELEMENT_KEY, {
         value: s.index,
       });
       Reflect.defineProperty(s, RECONCILE_FLAG, {
@@ -140,7 +137,7 @@ describe("reconcile", () => {
     });
 
     const prev = seed.map((s) => {
-      Reflect.defineProperty(s, RECONCILE_KEY, {
+      Reflect.defineProperty(s, CORN_ELEMENT_KEY, {
         value: s.index,
       });
       Reflect.defineProperty(s, RECONCILE_FLAG, {
@@ -152,7 +149,7 @@ describe("reconcile", () => {
 
     const insert = { a: 11, index: 11 };
 
-    Reflect.defineProperty(insert, RECONCILE_KEY, {
+    Reflect.defineProperty(insert, CORN_ELEMENT_KEY, {
       value: insert.index,
     });
 
