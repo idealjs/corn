@@ -10,5 +10,7 @@
   "peerDependencies": {
     "@idealjs/corn-reactive": "^1.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "snabbdom": "^3.3.1"
+  }
 }

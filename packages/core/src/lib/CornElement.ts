@@ -1,6 +1,8 @@
 import { IS_REACTIVE_READ, ReadFunction } from "@idealjs/corn-reactive";
+import { fragment, h, VNode } from "snabbdom";
 
 import { useEffect } from "./reactive";
+import { patch } from "./render";
 
 export type Primitive = number | string | boolean | symbol | null | undefined;
 export type CornText = number | string | boolean;
@@ -13,7 +15,7 @@ export const isCornText = (d: unknown): d is CornText => {
 };
 
 interface IEvents {
-  onClick?: () => void;
+  onClick: () => void;
 }
 
 type Child = Primitive | CornElement | ReadFunction | Child[];
@@ -24,40 +26,39 @@ export interface Props extends IEvents {
   children?: Child[];
 }
 
-const handleChildren = (parent: Element, children: Child[]) => {
-  children?.forEach((child) => {
-    if (isCornText(child)) {
-      parent.append(document.createTextNode(child.toString()));
-    }
-    if (child instanceof CornElement) {
-      parent.append(child.create());
-    }
-    if (child instanceof Function) {
-      if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
-        useEffect<Text | Element | Element[] | undefined>((prev) => {
-          const res = child();
-          if (isCornText(res)) {
-            if (prev == null) {
-              const text = document.createTextNode(res.toString());
-              parent.append(text);
-              return text;
-            }
-            if (!(prev instanceof Array)) {
-              prev.nodeValue = res.toString();
-            }
-            return prev;
-          }
-          if (res instanceof Array && prev instanceof Array) {
-          }
-        });
+const handleChildren = (children: Child[]): VNode[] => {
+  return children
+    ?.map((child) => {
+      if (isCornText(child)) {
+        return child.toString();
       }
-    }
-    if (child instanceof Array) {
-      handleChildren(parent, child);
-    }
-    console.warn("[warn] skip create", child, typeof child);
-    return null;
-  });
+      if (child instanceof CornElement) {
+        return child.create();
+      }
+      if (child instanceof Function) {
+        if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
+          return useEffect<VNode | undefined>((prev) => {
+            const res = child();
+
+            if (isCornText(res)) {
+              if (prev == null) {
+                const vNode = fragment([res.toString()]);
+                return vNode;
+              } else {
+                const vNode = fragment([res.toString()]);
+                return patch(prev, vNode);
+              }
+            }
+          });
+        }
+      }
+      // if (child instanceof Array) {
+      //   return handleChildren(child);
+      // }
+      console.warn("[warn] skip create", child, typeof child);
+      return null;
+    })
+    .filter((v): v is VNode => v != null);
 };
 
 class CornElement {
@@ -68,22 +69,20 @@ class CornElement {
     this.props = props;
   }
 
-  public create(): HTMLElement {
+  public create(): VNode {
     if (this.type instanceof Function) {
       const cornElement = this.type(this.props);
       return cornElement.create();
     }
-    const element = document.createElement(this.type);
 
-    if (this.props.children) {
-      handleChildren(element, this.props.children);
-    }
-
-    if (this.props.onClick) {
-      Reflect.set(element, "onclick", this.props.onClick);
-    }
-
-    return element;
+    const children = handleChildren(this.props.children ?? []);
+    const vNode = h(
+      this.type,
+      { ...this.props, on: { click: this.props.onClick } },
+      children
+    );
+    console.log(vNode);
+    return vNode;
   }
 }
 

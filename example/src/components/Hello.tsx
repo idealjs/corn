@@ -14,7 +14,7 @@ const Hello = (props: { name: string }) => {
   });
 
   const onClick = () => {
-    console.log("test test");
+    // console.log("test test");
     setState((s) => !s);
     setTodos((todos) => [...todos, state()]);
   };

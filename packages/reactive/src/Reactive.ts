@@ -38,7 +38,6 @@ class Reactive {
   private static handler = (effects: Set<IEffect>, root: IRoot) => ({
     get(target: object, p: string | symbol, receiver: unknown) {
       const effect = root.effects[root.effects.length - 1];
-      console.log("test test", root.effects);
       if (effect != null) {
         effects.add(effect);
       }

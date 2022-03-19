@@ -1,11 +1,26 @@
+import {
+  classModule,
+  eventListenersModule,
+  init,
+  propsModule,
+  styleModule,
+} from "snabbdom";
+
 import CornElement from "./CornElement";
 
-const render = (cornElement: CornElement, container: Element | null) => {
-  const el = cornElement.create();
-  if (container == null) {
-    throw new Error("");
+export const patch = init(
+  [classModule, propsModule, styleModule, eventListenersModule],
+  undefined,
+  {
+    experimental: {
+      fragments: true,
+    },
   }
-  container.append(el);
+);
+
+const render = (cornElement: CornElement, container: Element) => {
+  const vNode = cornElement.create();
+  patch(container, vNode);
 };
 
 export default render;
