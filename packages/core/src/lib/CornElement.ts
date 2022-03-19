@@ -1,5 +1,5 @@
 import { IS_REACTIVE_READ, ReadFunction } from "@idealjs/corn-reactive";
-import { fragment, h, VNode } from "snabbdom";
+import { h, VNode } from "snabbdom";
 
 import { useEffect } from "./reactive";
 import { patch } from "./render";
@@ -28,7 +28,7 @@ export interface Props extends IEvents {
 
 const handleChildren = (children: Child[]): VNode[] => {
   return children
-    ?.map((child) => {
+    ?.flatMap((child) => {
       if (isCornText(child)) {
         return child.toString();
       }
@@ -39,23 +39,34 @@ const handleChildren = (children: Child[]): VNode[] => {
         if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
           return useEffect<VNode | undefined>((prev) => {
             const res = child();
-
             if (isCornText(res)) {
               if (prev == null) {
-                const vNode = fragment([res.toString()]);
+                const vNode = h("div", [res.toString()]);
                 return vNode;
               } else {
-                const vNode = fragment([res.toString()]);
+                const vNode = h("div", [res.toString()]);
                 return patch(prev, vNode);
               }
             }
+            if (res instanceof Array) {
+              if (prev == null) {
+                const resChildren = handleChildren(res);
+                const vNode = h("div", resChildren);
+                return { ...vNode };
+              } else {
+                const resChildren = handleChildren(res);
+                const vNode = h("div", resChildren);
+                return patch(prev, vNode);
+              }
+            }
+            console.warn("[warn] skip create res", res, typeof res);
           });
         }
       }
-      // if (child instanceof Array) {
-      //   return handleChildren(child);
-      // }
-      console.warn("[warn] skip create", child, typeof child);
+      if (child instanceof Array) {
+        return handleChildren(child);
+      }
+      console.warn("[warn] skip create child", child, typeof child);
       return null;
     })
     .filter((v): v is VNode => v != null);
@@ -81,7 +92,6 @@ class CornElement {
       { ...this.props, on: { click: this.props.onClick } },
       children
     );
-    console.log(vNode);
     return vNode;
   }
 }

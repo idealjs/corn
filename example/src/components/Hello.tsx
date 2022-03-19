@@ -5,11 +5,11 @@ const Hello = (props: { name: string }) => {
 
   const [state, setState] = createSignal(true);
 
-  const [todos, setTodos] = createSignal<boolean[]>([]);
+  const [todos, setTodos] = createSignal<boolean[]>([true, false]);
 
   const todosDiv = useMemo(() => {
     return todos().map((todo, index) => {
-      return <div key={index}>test {todo}</div>;
+      return <div key={index}>memo test {todo}</div>;
     });
   });
 
