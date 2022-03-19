@@ -1,5 +1,5 @@
 export {
-  useDiffSignal,
+  createDiffSignal,
   useEffect,
   useMemo,
   createSignal,

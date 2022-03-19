@@ -35,7 +35,7 @@ class Reactive {
 
   constructor() {
     this.createSignal = this.createSignal.bind(this);
-    this.useDiffSignal = this.useDiffSignal.bind(this);
+    this.createDiffSignal = this.createDiffSignal.bind(this);
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
   }
@@ -140,16 +140,16 @@ class Reactive {
     return [read, write];
   }
 
-  public useDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(): [
+  public createDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(): [
     ReadFunction<T[] | undefined>,
     WriteFunction<T[] | undefined>
   ];
 
-  public useDiffSignal<TA extends unknown[]>(
+  public createDiffSignal<TA extends unknown[]>(
     value: TA
   ): [ReadFunction<typeof value>, WriteFunction<typeof value>];
 
-  public useDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(
+  public createDiffSignal<TA extends unknown[], T = ExtractArray<TA>>(
     value?: T[] | undefined
   ): [ReadFunction<T[] | undefined>, WriteFunction<T[] | undefined>] {
     let tmp: T[] | undefined = value;

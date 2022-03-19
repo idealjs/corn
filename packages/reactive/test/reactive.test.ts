@@ -3,9 +3,9 @@ import { FLAG, WithFlag } from "../src/type";
 
 const reactive = new Reactive();
 
-describe("useDiffSignal test", () => {
+describe("createDiffSignal test", () => {
   test("test 3", () => {
-    const [todos, setTodos] = reactive.useDiffSignal<WithFlag<string>[]>([]);
+    const [todos, setTodos] = reactive.createDiffSignal<WithFlag<string>[]>([]);
     let array: string[] = [];
     reactive.useEffect(() => {
       expect(todos().map((t) => t.data)).toStrictEqual(array);
