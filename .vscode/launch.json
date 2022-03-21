@@ -2,13 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Jest Tests",
+      "name": "Debug Jest Tests Reactive",
       "type": "node",
       "request": "launch",
+      "cwd": "${workspaceFolder}/packages/reactive",
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/jest/bin/jest.js",
         "--runInBand",
+        "--config=${workspaceRoot}/jest.config.ts",
+        "--roots=${workspaceRoot}/packages/reactive"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
