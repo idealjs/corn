@@ -23,7 +23,7 @@ type Child = Primitive | CornElement | ReadFunction | Child[];
 export const CORN_ELEMENT_KEY = "CORN_ELEMENT_KEY";
 
 export interface Props extends IEvents {
-  children?: Child[];
+  children?: Child | Child[];
 }
 
 const handleChildren = (children: Child[]): VNode[] => {
@@ -85,8 +85,7 @@ class CornElement {
       const cornElement = this.type(this.props);
       return cornElement.create();
     }
-
-    const children = handleChildren(this.props.children ?? []);
+    const children = handleChildren([this.props.children].flatMap((c) => c));
     const vNode = h(
       this.type,
       { ...this.props, on: { click: this.props.onClick } },
