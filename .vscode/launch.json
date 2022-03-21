@@ -2,30 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Jest Tests cron",
+      "name": "Debug Jest Tests",
       "type": "node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/packages/core",
       "runtimeArgs": [
         "--inspect-brk",
         "${workspaceRoot}/node_modules/jest/bin/jest.js",
         "--runInBand",
-        "--config jest.config.js"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "port": 9229
-    },
-    {
-      "name": "Debug Jest Tests cron-reactive",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceFolder}/packages/reactive",
-      "runtimeArgs": [
-        "--inspect-brk",
-        "${workspaceRoot}/node_modules/jest/bin/jest.js",
-        "--runInBand",
-        "--config jest.config.js"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",

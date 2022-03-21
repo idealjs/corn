@@ -1,9 +1,7 @@
 {
   "name": "@idealjs/corn",
   "version": "1.0.0",
-  "scripts": {
-    "test": "jest"
-  },
+  "scripts": {},
   "devDependencies": {
     "@idealjs/corn-reactive": "^1.0.0"
   },
