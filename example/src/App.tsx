@@ -1,12 +1,9 @@
-import Hello from "./components/Hello";
+import Parent from "./components/zombie_test/Parent";
 
-const list = ["a", "b", "c"];
 const App = () => {
   return (
     <div>
-      {list.map((i) => (
-        <Hello name={i} />
-      ))}
+      <Parent />
     </div>
   );
 };
