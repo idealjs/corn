@@ -63,6 +63,7 @@ interface VDomApi {
   getTextContent(api: IDomApi, node: Node): string;
 }
 
+// track code will be easier if use class
 class VDomApi {
   static createElement<K extends keyof HTMLElementTagNameMap>(
     api: IDomApi,
