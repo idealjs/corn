@@ -1,5 +1,8 @@
 {
   "name": "@idealjs/html-dom-api",
   "version": "1.0.0",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@idealjs/v-dom": "^1.0.0"
+  }
 }
