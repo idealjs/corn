@@ -1,9 +1,11 @@
 export const IS_REACTIVE_READ = "IS_REACTIVE_READ";
+export const REACTIVE_EFFECTS = "REACTIVE_EFFECTS";
+
 export type ReadFunction<T = unknown> = () => T;
 export type WriteFunction<T = unknown> = (
   next: T | ((preValue: T) => T)
 ) => void;
-interface IEffect<T = unknown> {
+export interface IEffect<T = unknown> {
   fn: (prev: T) => T;
   prev?: T;
 }
@@ -35,11 +37,12 @@ class Reactive {
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
   }
-  private static handler = (effects: Set<IEffect>, root: IRoot) => ({
+  private static handler = (effects: Map<Function, IEffect>, root: IRoot) => ({
     get(target: object, p: string | symbol, receiver: unknown) {
       const effect = root.effects[root.effects.length - 1];
+
       if (effect != null) {
-        effects.add(effect);
+        effects.set(effect.fn, effect);
       }
       return Reflect.get(target, p, receiver);
     },
@@ -50,7 +53,8 @@ class Reactive {
       receiver: unknown
     ) => {
       Reflect.set(target, p, value, receiver);
-      for (const effect of [...effects]) {
+
+      effects.forEach((effect) => {
         root.effects.push(effect);
         if (root.batch.pending) {
           root.batch.effects.add(effect);
@@ -58,7 +62,8 @@ class Reactive {
           effect.prev = effect.fn(effect.prev);
         }
         root.effects.pop();
-      }
+      });
+
       return true;
     },
   });
@@ -76,7 +81,7 @@ class Reactive {
     let tmp: T | undefined = value;
 
     const root = this.root;
-    const effects = new Set<IEffect>();
+    const effects = new Map<Function, IEffect>();
     const proxy = new Proxy<{ value: typeof value }>(
       { value },
       Reactive.handler(effects, root)
@@ -85,7 +90,9 @@ class Reactive {
     const read: ReadFunction<typeof value> = () => {
       return proxy.value;
     };
+
     Reflect.defineProperty(read, IS_REACTIVE_READ, { value: true });
+    Reflect.defineProperty(read, REACTIVE_EFFECTS, { value: effects });
 
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {

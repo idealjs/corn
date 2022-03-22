@@ -20,7 +20,7 @@ const Parent = () => {
       <button
         onClick={() => {
           setData((d) => {
-            d.pop();
+            d[1].name = d[1].name + "a";
             return d;
           });
         }}
