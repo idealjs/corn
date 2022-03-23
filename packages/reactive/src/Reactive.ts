@@ -74,10 +74,6 @@ class Reactive {
 
         const roots = getRoots();
 
-        if (root == null) {
-          return true;
-        }
-
         signalEffects.forEach((effect) => {
           // push effect, wait signal's read re collect
           roots.forEach((root) => {
