@@ -96,6 +96,8 @@ class Reactive {
       return proxy.value;
     };
 
+    Reflect.defineProperty(read, IS_REACTIVE_READ, { value: true });
+
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {
         proxy.value = tmp = nextValue(tmp);

@@ -1,5 +1,5 @@
 {
-    "name": "01-post",
+    "name": "example",
     "version": "1.0.0",
     "scripts": {
         "start": "webpack serve",
