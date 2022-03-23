@@ -1,13 +1,5 @@
-import {
-  IEffect,
-  IS_REACTIVE_READ,
-  REACTIVE_EFFECTS,
-  ReadFunction,
-} from "@idealjs/corn-reactive";
+import { IS_REACTIVE_READ, ReadFunction } from "@idealjs/corn-reactive";
 import { h, VNode } from "snabbdom";
-
-import { useEffect } from "./reactive";
-import { patch } from "./render";
 
 export type Primitive = number | string | boolean | symbol | null | undefined;
 export type CornText = number | string | boolean;
@@ -42,50 +34,17 @@ const handleChildren = (children: Child[]): VNode[] => {
       }
       if (child instanceof Function) {
         if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
-          const effectFn = (prev?: VNode) => {
-            const res = child();
-            const releaseEffect = () => {
-              (
-                Reflect.getOwnPropertyDescriptor(child, REACTIVE_EFFECTS)
-                  ?.value as Map<Function, IEffect>
-              ).delete(effectFn);
-            };
-
-            if (isCornText(res)) {
-              if (prev == null) {
-                const vNode = h("div", [res.toString()]);
-                Reflect.defineProperty(vNode, RELEASE_EFFECT_FN, {
-                  value: releaseEffect,
-                });
-                return vNode;
-              } else {
-                const vNode = h("div", [res.toString()]);
-                Reflect.defineProperty(vNode, RELEASE_EFFECT_FN, {
-                  value: releaseEffect,
-                });
-                return patch(prev, vNode);
-              }
-            }
-            if (res instanceof Array) {
-              if (prev == null) {
-                const resChildren = handleChildren(res);
-                const vNode = h("div", resChildren);
-                Reflect.defineProperty(vNode, RELEASE_EFFECT_FN, {
-                  value: releaseEffect,
-                });
-                return { ...vNode };
-              } else {
-                const resChildren = handleChildren(res);
-                const vNode = h("div", resChildren);
-                Reflect.defineProperty(vNode, RELEASE_EFFECT_FN, {
-                  value: releaseEffect,
-                });
-                return patch(prev, vNode);
-              }
-            }
-            console.warn("[warn] skip create res", res, typeof res);
-          };
-          return useEffect<VNode | undefined>(effectFn);
+          const res = child();
+          if (isCornText(res)) {
+            const vNode = h("div", [res.toString()]);
+            return vNode;
+          }
+          if (res instanceof Array) {
+            const resChildren = handleChildren(res);
+            const vNode = h("div", resChildren);
+            return vNode;
+          }
+          console.warn("[warn] skip create res", res, typeof res);
         }
       }
       if (child instanceof Array) {
@@ -108,7 +67,9 @@ class CornElement {
   public create(): VNode {
     if (this.type instanceof Function) {
       const cornElement = this.type(this.props);
-      return cornElement.create();
+      const vNode = cornElement.create();
+
+      return vNode;
     }
     const children = handleChildren([this.props.children].flatMap((c) => c));
     const vNode = h(

@@ -37,6 +37,7 @@ class Reactive {
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
   }
+
   private static handler = (effects: Map<Function, IEffect>, root: IRoot) => ({
     get(target: object, p: string | symbol, receiver: unknown) {
       const effect = root.effects[root.effects.length - 1];
@@ -68,6 +69,10 @@ class Reactive {
     },
   });
 
+  public getRootEffects() {
+    return this.root.effects;
+  }
+
   public createSignal<T>(): [
     ReadFunction<T | undefined>,
     WriteFunction<T | undefined>
@@ -90,9 +95,6 @@ class Reactive {
     const read: ReadFunction<typeof value> = () => {
       return proxy.value;
     };
-
-    Reflect.defineProperty(read, IS_REACTIVE_READ, { value: true });
-    Reflect.defineProperty(read, REACTIVE_EFFECTS, { value: effects });
 
     const write: WriteFunction<typeof value> = (nextValue) => {
       if (isSetFunction(nextValue)) {
