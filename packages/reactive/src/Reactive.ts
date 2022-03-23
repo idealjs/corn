@@ -9,9 +9,16 @@ export interface IEffect<T = unknown> {
   fn: (prev: T) => T;
   prev?: T;
 }
+
+interface ISignal<T = unknown> {
+  read: ReadFunction<T>;
+  write: WriteFunction<T>;
+  effects: Set<IEffect<T>>;
+}
+
 interface IRoot {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   effects: IEffect<any>[];
+  signals: ISignal<any>[];
   batch: {
     pending: boolean;
     effects: Set<IEffect>;
@@ -22,89 +29,126 @@ const isSetFunction = <T>(v: T | ((d: T) => T)): v is (d: T) => T => {
   return v instanceof Function;
 };
 
+const cleanEffects = (signals: ISignal[]) => {
+  signals.forEach((signal) => {
+    signal.effects.clear();
+  });
+};
+
 //Publish–subscribe pattern
 class Reactive {
-  private root: IRoot = {
-    effects: [],
-    batch: {
-      pending: false,
-      effects: new Set(),
-    },
-  };
+  private roots: IRoot[] = [];
 
   constructor() {
+    this.createRoot = this.createRoot.bind(this);
     this.createSignal = this.createSignal.bind(this);
     this.useMemo = this.useMemo.bind(this);
     this.useEffect = this.useEffect.bind(this);
+    this.handler = this.handler.bind(this);
   }
 
-  private static handler = (effects: Map<Function, IEffect>, root: IRoot) => ({
-    get(target: object, p: string | symbol, receiver: unknown) {
-      const effect = root.effects[root.effects.length - 1];
+  private handler(signalEffects: Set<IEffect>, root?: IRoot) {
+    const getRoots = () => {
+      return root ? [root] : this.roots;
+    };
+    return {
+      get(target: object, p: string | symbol, receiver: unknown) {
+        const roots = getRoots();
+        const effects = roots
+          .map((root) => root.effects[root.effects.length - 1])
+          .filter((effect) => effect != null);
+        const effect = effects[0] as IEffect | undefined;
 
-      if (effect != null) {
-        effects.set(effect.fn, effect);
-      }
-      return Reflect.get(target, p, receiver);
-    },
-    set: (
-      target: object,
-      p: string | symbol,
-      value: unknown,
-      receiver: unknown
-    ) => {
-      Reflect.set(target, p, value, receiver);
-
-      effects.forEach((effect) => {
-        root.effects.push(effect);
-        if (root.batch.pending) {
-          root.batch.effects.add(effect);
-        } else {
-          effect.prev = effect.fn(effect.prev);
+        if (effect != null) {
+          signalEffects.add(effect);
         }
-        root.effects.pop();
-      });
+        return Reflect.get(target, p, receiver);
+      },
+      set: (
+        target: object,
+        p: string | symbol,
+        value: unknown,
+        receiver: unknown
+      ) => {
+        Reflect.set(target, p, value, receiver);
 
-      return true;
-    },
-  });
+        const roots = getRoots();
 
-  public getRootEffects() {
-    return this.root.effects;
+        if (root == null) {
+          return true;
+        }
+
+        signalEffects.forEach((effect) => {
+          // push effect, wait signal's read re collect
+          roots.forEach((root) => {
+            root.effects.push(effect);
+            if (root.batch.pending) {
+              root.batch.effects.add(effect);
+            } else {
+              effect.prev = effect.fn(effect.prev);
+            }
+            root.effects.pop();
+          });
+        });
+
+        return true;
+      },
+    };
   }
 
-  public createSignal<T>(): [
-    ReadFunction<T | undefined>,
-    WriteFunction<T | undefined>
+  public createRoot<T>(fn: (dispose: () => void) => T): T {
+    const root: IRoot = {
+      effects: [],
+      signals: [],
+      batch: {
+        pending: false,
+        effects: new Set<IEffect>(),
+      },
+    };
+    this.roots.push(root);
+    const res = fn(() => cleanEffects(root.signals));
+    this.roots.pop();
+    return res;
+  }
+
+  public createSignal<V>(): [
+    ReadFunction<V | undefined>,
+    WriteFunction<V | undefined>
   ];
 
-  public createSignal<T>(value: T): [ReadFunction<T>, WriteFunction<T>];
+  public createSignal<V>(value: V): [ReadFunction<V>, WriteFunction<V>];
 
-  public createSignal<T>(
-    value?: T
-  ): [ReadFunction<typeof value>, WriteFunction<typeof value>] {
-    let tmp: T | undefined = value;
+  public createSignal<V>(
+    value?: V
+  ): [ReadFunction<V | undefined>, WriteFunction<V | undefined>] {
+    let tmp: V | undefined = value;
 
-    const root = this.root;
-    const effects = new Map<Function, IEffect>();
-    const proxy = new Proxy<{ value: typeof value }>(
+    const root = this.roots[this.roots.length - 1] as IRoot | undefined;
+    const effects = new Set<IEffect>();
+    const proxy = new Proxy<{ value: V | undefined }>(
       { value },
-      Reactive.handler(effects, root)
+      this.handler(effects, root)
     );
 
-    const read: ReadFunction<typeof value> = () => {
+    const read: ReadFunction<V | undefined> = () => {
       return proxy.value;
     };
 
     Reflect.defineProperty(read, IS_REACTIVE_READ, { value: true });
 
-    const write: WriteFunction<typeof value> = (nextValue) => {
+    const write: WriteFunction<V | undefined> = (nextValue) => {
       if (isSetFunction(nextValue)) {
         proxy.value = tmp = nextValue(tmp);
       } else {
         proxy.value = tmp = nextValue;
       }
     };
+
+    root?.signals.push({
+      read,
+      write: write,
+      effects,
+    });
     return [read, write];
   }
 
@@ -120,8 +164,9 @@ class Reactive {
     return state;
   }
 
+  // create effect wait signal read function collect;
   public useEffect = <T>(fn: (prev?: T) => T) => {
-    const root = this.root;
+    const root = this.roots[this.roots.length - 1];
     const effect: IEffect<T> = {
       fn,
     };
@@ -132,7 +177,7 @@ class Reactive {
   };
 
   public batch = (fn: () => void) => {
-    const root = this.root;
+    const root = this.roots[this.roots.length - 1];
     root.batch.pending = true;
     fn();
     root.batch.pending = false;

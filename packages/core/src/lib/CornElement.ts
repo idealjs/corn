@@ -1,6 +1,9 @@
 import { IS_REACTIVE_READ, ReadFunction } from "@idealjs/corn-reactive";
 import { h, VNode } from "snabbdom";
 
+import { createRoot, useEffect } from "./reactive";
+import { patch } from "./render";
+
 export type Primitive = number | string | boolean | symbol | null | undefined;
 export type CornText = number | string | boolean;
 export type CornComponent<P = unknown> = (props?: P) => CornElement;
@@ -34,17 +37,46 @@ const handleChildren = (children: Child[]): VNode[] => {
       }
       if (child instanceof Function) {
         if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
-          const res = child();
-          if (isCornText(res)) {
-            const vNode = h("div", [res.toString()]);
-            return vNode;
-          }
-          if (res instanceof Array) {
-            const resChildren = handleChildren(res);
-            const vNode = h("div", resChildren);
-            return vNode;
-          }
-          console.warn("[warn] skip create res", res, typeof res);
+          let clean: () => void;
+          const effectFn = (prev?: VNode) => {
+            clean && clean();
+            const res = child();
+
+            if (isCornText(res)) {
+              if (prev == null) {
+                return createRoot((dispose) => {
+                  const vNode = h("div", [res.toString()]);
+                  clean = dispose;
+                  return vNode;
+                });
+              } else {
+                return createRoot((dispose) => {
+                  const vNode = h("div", [res.toString()]);
+                  clean = dispose;
+                  return patch(prev, vNode);
+                });
+              }
+            }
+            if (res instanceof Array) {
+              if (prev == null) {
+                return createRoot((dispose) => {
+                  const resChildren = handleChildren(res);
+                  const vNode = h("div", resChildren);
+                  clean = dispose;
+                  return vNode;
+                });
+              } else {
+                return createRoot((dispose) => {
+                  const resChildren = handleChildren(res);
+                  const vNode = h("div", resChildren);
+                  clean = dispose;
+                  return patch(prev, vNode);
+                });
+              }
+            }
+            console.warn("[warn] skip create res", res, typeof res);
+          };
+          return useEffect<VNode | undefined>(effectFn);
         }
       }
       if (child instanceof Array) {

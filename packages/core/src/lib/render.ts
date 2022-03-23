@@ -7,6 +7,7 @@ import {
 } from "snabbdom";
 
 import CornElement from "./CornElement";
+import { createRoot } from "./reactive";
 
 export const patch = init(
   [classModule, propsModule, styleModule, eventListenersModule],
@@ -19,8 +20,10 @@ export const patch = init(
 );
 
 const render = (cornElement: CornElement, container: Element) => {
-  const vNode = cornElement.create();
-  patch(container, vNode);
+  createRoot(() => {
+    const vNode = cornElement.create();
+    patch(container, vNode);
+  });
 };
 
 export default render;
