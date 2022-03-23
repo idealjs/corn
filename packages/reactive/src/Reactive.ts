@@ -72,21 +72,23 @@ class Reactive {
       ) => {
         Reflect.set(target, p, value, receiver);
 
-        const roots = getRoots();
+        // const roots = getRoots();
 
         signalEffects.forEach((effect) => {
+          effect.prev = effect.fn(effect.prev);
           // push effect, wait signal's read re collect
-          roots.forEach((root) => {
-            root.effects.push(effect);
-            if (root.batch.pending) {
-              root.batch.effects.add(effect);
-            } else {
-              effect.prev = effect.fn(effect.prev);
-            }
-            root.effects.pop();
-          });
+          // roots.forEach((root) => {
+          //   root.effects.push(effect);
+          //   if (root.batch.pending) {
+          //     root.batch.effects.add(effect);
+          //   } else {
+
+          //   }
+          //   root.effects.pop();
+          // });
         });
 
+        // debugger;
         return true;
       },
     };
@@ -162,25 +164,25 @@ class Reactive {
 
   // create effect wait signal read function collect;
   public useEffect = <T>(fn: (prev?: T) => T) => {
-    const root = this.roots[this.roots.length - 1];
+    const root = this.roots[this.roots.length - 1] as IRoot | undefined;
     const effect: IEffect<T> = {
       fn,
     };
-    root.effects.push(effect);
+    root?.effects.push(effect);
     effect.prev = fn(effect.prev);
-    root.effects.pop();
+    root?.effects.pop();
     return effect.prev;
   };
 
   public batch = (fn: () => void) => {
-    const root = this.roots[this.roots.length - 1];
-    root.batch.pending = true;
+    const root = this.roots[this.roots.length - 1] as IRoot | undefined;
+    root && (root.batch.pending = true);
     fn();
-    root.batch.pending = false;
-    root.batch.effects.forEach((effect) => {
+    root && (root.batch.pending ??= false);
+    root?.batch.effects.forEach((effect) => {
       effect.prev = effect.fn(effect.prev);
     });
-    root.batch.effects.clear();
+    root?.batch.effects.clear();
   };
 }
 
