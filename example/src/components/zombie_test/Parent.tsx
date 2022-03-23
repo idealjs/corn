@@ -25,7 +25,7 @@ const Parent = () => {
           });
         }}
       >
-        -
+        +
       </button>
     </div>
   );
