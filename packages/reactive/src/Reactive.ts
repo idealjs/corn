@@ -17,6 +17,7 @@ interface ISignal<T = unknown> {
 }
 
 interface IRoot {
+  effectCache: Set<IEffect<any>>;
   effects: IEffect<any>[];
   signals: ISignal<any>[];
   batch: {
@@ -33,6 +34,7 @@ const isSetFunction = <T>(v: T | ((d: T) => T)): v is (d: T) => T => {
 class Reactive {
   private roots: IRoot[] = [];
   private root: IRoot = {
+    effectCache: new Set<IEffect>(),
     effects: [],
     signals: [],
     batch: {
@@ -49,14 +51,17 @@ class Reactive {
   }
 
   private cleanEffects(root: IRoot) {
-    root.signals.forEach((signal) => {
-      signal.effects.forEach((effect) => {
-        this.root.signals.forEach((signal) => {
-          signal.effects.delete(effect);
-        });
+    root.effectCache.forEach((effect) => {
+      this.root.signals.forEach((signal) => {
+        signal.effects.delete(effect);
       });
+    });
+
+    root.signals.forEach((signal) => {
       signal.effects.clear();
     });
+
+    root.effectCache.clear();
   }
 
   private handler(signalEffects: Set<IEffect>, root?: IRoot) {
@@ -119,6 +124,7 @@ class Reactive {
 
   public createRoot<T>(fn: (dispose: () => void) => T): T {
     const root: IRoot = {
+      effectCache: new Set<IEffect>(),
       effects: [],
       signals: [],
       batch: {
@@ -194,6 +200,7 @@ class Reactive {
     root?.effects.push(effect);
     effect.prev = fn(effect.prev);
     root?.effects.pop();
+    root?.effectCache.add(effect);
     return effect.prev;
   };
 
@@ -201,7 +208,7 @@ class Reactive {
     const root = this.roots[this.roots.length - 1] as IRoot | undefined;
     root && (root.batch.pending = true);
     fn();
-    root && (root.batch.pending ??= false);
+    root && (root.batch.pending = false);
     root?.batch.effects.forEach((effect) => {
       effect.prev = effect.fn(effect.prev);
     });

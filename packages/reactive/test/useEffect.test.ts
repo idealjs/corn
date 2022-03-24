@@ -92,20 +92,20 @@ describe("useEffect number set get", () => {
     const [signal2, setSignal2] = reactive.createSignal<number>(0);
     reactive.createRoot(() => {
       reactive.useEffect((prev: number = -1) => {
-        console.log("1");
-        setSignal2((p) => p + 1);
-        console.log("2");
-        expect(signal()).toBe(prev + 1);
-        return signal();
-      });
-
-      reactive.useEffect((prev: number = 0) => {
-        console.log("3");
+        console.log("1", prev);
         expect(signal2()).toBe(prev + 1);
         return signal2();
       });
 
-      setSignal(1);
+      reactive.useEffect((prev: number = -1) => {
+        console.log("2");
+        setSignal2((p) => p + 1);
+        console.log("3");
+        expect(signal()).toBe(prev + 1);
+        return signal();
+      });
+
+      // setSignal(1);
     });
   });
 });
