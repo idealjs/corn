@@ -8,24 +8,26 @@ describe("batch test", () => {
     const [result, setResult] = reactive.createSignal<string | undefined>(
       name()
     );
-    let count = 0;
+    reactive.createRoot(() => {
+      let count = 0;
 
-    reactive.useEffect(() => {
-      setResult(name());
-      count = count + 1;
+      reactive.useEffect(() => {
+        setResult(name());
+        count = count + 1;
+      });
+
+      expect(count).toBe(1);
+
+      const name1 = "world";
+      const name2 = "world world";
+
+      reactive.batch(() => {
+        setName(name1);
+        setName(name2);
+      });
+
+      expect(result()).toBe(name2);
+      expect(count).toBe(2);
     });
-
-    expect(count).toBe(1);
-
-    const name1 = "world";
-    const name2 = "world world";
-
-    reactive.batch(() => {
-      setName(name1);
-      setName(name2);
-    });
-
-    expect(result()).toBe(name2);
-    expect(count).toBe(2);
   });
 });
