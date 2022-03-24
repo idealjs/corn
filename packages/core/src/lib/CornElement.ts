@@ -41,7 +41,7 @@ const handleChildren = (children: Child[]): VNode[] => {
           const effectFn = (prev?: VNode) => {
             clean && clean();
             const res = child();
-
+            console.debug("[debug] effectFn res", res);
             if (isCornText(res)) {
               if (prev == null) {
                 return createRoot((dispose) => {

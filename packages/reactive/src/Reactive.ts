@@ -29,16 +29,17 @@ const isSetFunction = <T>(v: T | ((d: T) => T)): v is (d: T) => T => {
   return v instanceof Function;
 };
 
-const cleanEffects = (signals: ISignal[]) => {
-  signals.forEach((signal) => {
-    signal.effects.clear();
-  });
-};
-
 //Publish–subscribe pattern
 class Reactive {
   private roots: IRoot[] = [];
-
+  private root: IRoot = {
+    effects: [],
+    signals: [],
+    batch: {
+      pending: false,
+      effects: new Set<IEffect>(),
+    },
+  };
   constructor() {
     this.createRoot = this.createRoot.bind(this);
     this.createSignal = this.createSignal.bind(this);
@@ -47,21 +48,47 @@ class Reactive {
     this.handler = this.handler.bind(this);
   }
 
+  private cleanEffects(root: IRoot) {
+    root.signals.forEach((signal) => {
+      signal.effects.forEach((effect) => {
+        this.root.signals.forEach((signal) => {
+          signal.effects.delete(effect);
+        });
+      });
+      signal.effects.clear();
+    });
+  }
+
   private handler(signalEffects: Set<IEffect>, root?: IRoot) {
-    const getRoots = () => {
-      return root ? [root] : this.roots;
+    const getRoot = () => {
+      return root ? root : this.root;
     };
+    const getRoots = () => {
+      return [this.root, root, ...this.roots].filter(
+        (root): root is IRoot => root != null
+      );
+    };
+
     return {
       get(target: object, p: string | symbol, receiver: unknown) {
-        const roots = getRoots();
-        const effects = roots
-          .map((root) => root.effects[root.effects.length - 1])
-          .filter((effect) => effect != null);
-        const effect = effects[0] as IEffect | undefined;
+        if (root == null) {
+          const roots = getRoots();
+          const effects = roots
+            .map((root) => root.effects[root.effects.length - 1])
+            .filter((effect) => effect != null);
 
-        if (effect != null) {
-          signalEffects.add(effect);
+          effects.forEach((effect) => {
+            signalEffects.add(effect);
+          });
+        } else {
+          const effect = root.effects[root.effects.length - 1] as
+            | IEffect
+            | undefined;
+          if (effect) {
+            signalEffects.add(effect);
+          }
         }
+
         return Reflect.get(target, p, receiver);
       },
       set: (
@@ -72,23 +99,19 @@ class Reactive {
       ) => {
         Reflect.set(target, p, value, receiver);
 
-        // const roots = getRoots();
+        const root = getRoot();
 
         signalEffects.forEach((effect) => {
-          effect.prev = effect.fn(effect.prev);
           // push effect, wait signal's read re collect
-          // roots.forEach((root) => {
-          //   root.effects.push(effect);
-          //   if (root.batch.pending) {
-          //     root.batch.effects.add(effect);
-          //   } else {
-
-          //   }
-          //   root.effects.pop();
-          // });
+          root.effects.push(effect);
+          if (root.batch.pending) {
+            root.batch.effects.add(effect);
+          } else {
+            effect.prev = effect.fn(effect.prev);
+          }
+          root.effects.pop();
         });
 
-        // debugger;
         return true;
       },
     };
@@ -104,7 +127,7 @@ class Reactive {
       },
     };
     this.roots.push(root);
-    const res = fn(() => cleanEffects(root.signals));
+    const res = fn(() => this.cleanEffects(root));
     this.roots.pop();
     return res;
   }
