@@ -66,32 +66,21 @@ class Reactive {
 
   private handler(signalEffects: Set<IEffect>, root?: IRoot) {
     const getRoot = () => {
-      return root ? root : this.root;
-    };
-    const getRoots = () => {
-      return [this.root, root, ...this.roots].filter(
-        (root): root is IRoot => root != null
-      );
+      return root
+        ? root
+        : (this.roots[this.roots.length - 1] as IRoot | undefined);
     };
 
     return {
       get(target: object, p: string | symbol, receiver: unknown) {
-        if (root == null) {
-          const roots = getRoots();
-          const effects = roots
-            .map((root) => root.effects[root.effects.length - 1])
-            .filter((effect) => effect != null);
+        const root = getRoot();
 
-          effects.forEach((effect) => {
-            signalEffects.add(effect);
-          });
-        } else {
-          const effect = root.effects[root.effects.length - 1] as
-            | IEffect
-            | undefined;
-          if (effect) {
-            signalEffects.add(effect);
-          }
+        const effect = root?.effects[root.effects.length - 1] as
+          | IEffect
+          | undefined;
+
+        if (effect) {
+          signalEffects.add(effect);
         }
 
         return Reflect.get(target, p, receiver);
@@ -108,13 +97,13 @@ class Reactive {
 
         signalEffects.forEach((effect) => {
           // push effect, wait signal's read re collect
-          root.effects.push(effect);
-          if (root.batch.pending) {
+          root?.effects.push(effect);
+          if (root?.batch.pending) {
             root.batch.effects.add(effect);
           } else {
             effect.prev = effect.fn(effect.prev);
           }
-          root.effects.pop();
+          root?.effects.pop();
         });
 
         return true;
