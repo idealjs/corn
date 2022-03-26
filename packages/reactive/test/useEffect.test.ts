@@ -1,77 +1,61 @@
 import Reactive from "../src/Reactive";
+import timer from "./timer";
 
 const reactive = new Reactive();
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
 describe("useEffect number", () => {
-  test("number signal", () => {
+  test("number signal + effect times", (done) => {
     const [signal, setSignal] = reactive.createSignal<number>(0);
     reactive.createRoot(() => {
       let times = 0;
-      reactive.useEffect(() => {
+      const effectFn = jest.fn(() => {
         expect(signal()).toBe(times);
         times++;
       });
-
+      reactive.useEffect(effectFn);
       setSignal(times);
-    });
-  });
+      jest.advanceTimersByTime(16);
 
-  test("number signal + effect times", () => {
-    const [signal, setSignal] = reactive.createSignal<number>(0);
-    reactive.createRoot(() => {
-      let times = 0;
-      reactive.useEffect(() => {
-        console.log("test test", times);
-        expect(signal()).toBe(times);
-        times++;
+      timer(16).then(() => {
+        expect(effectFn).toBeCalledTimes(2);
+        expect(times).toBe(2);
+        done();
       });
-      setSignal(times);
-
-      expect(times).toBe(2);
+      jest.advanceTimersByTime(16);
     });
   });
 });
 
 describe("useEffect array number", () => {
-  test("array number signal", () => {
+  test("array number signal function + effect times", (done) => {
     const [signal, setSignal] = reactive.createSignal<number[]>([0]);
     reactive.createRoot(() => {
       let times = [0];
-      reactive.useEffect(() => {
+      const effectFn = jest.fn(() => {
         expect(signal()).toStrictEqual(times);
         times = times.concat(times.length);
       });
+      reactive.useEffect(effectFn);
 
       setSignal(times);
-    });
-  });
+      jest.advanceTimersByTime(16);
 
-  test("array number signal function + effect times", () => {
-    const [signal, setSignal] = reactive.createSignal<number[]>([0]);
-    reactive.createRoot(() => {
-      let times = [0];
-      reactive.useEffect(() => {
-        expect(signal()).toStrictEqual(times);
-        times = times.concat(times.length);
+      timer(16).then(() => {
+        console.log("test test");
+        expect(effectFn).toBeCalledTimes(2);
+        expect(times.length).toBe(3);
+        done();
       });
-
-      setSignal(times);
-      expect(times.length).toBe(3);
+      jest.advanceTimersByTime(16);
     });
   });
 });
 
 describe("useEffect obj", () => {
-  test("obj signal", () => {
-    const [signal, setSignal] = reactive.createSignal({ a: 0 });
-    reactive.createRoot(() => {
-      setSignal({ a: 1 });
-      reactive.useEffect(() => {
-        expect(signal()).toStrictEqual({ a: 1 });
-      });
-    });
-  });
-
   test("obj signal function + effect times", () => {
     const [signal, setSignal] = reactive.createSignal({ a: 0 });
     reactive.createRoot(() => {
@@ -87,25 +71,38 @@ describe("useEffect obj", () => {
 });
 
 describe("useEffect number set get", () => {
-  test("number signal", () => {
+  test("number signal", (done) => {
     const [signal, setSignal] = reactive.createSignal<number>(0);
     const [signal2, setSignal2] = reactive.createSignal<number>(0);
+
     reactive.createRoot(() => {
-      reactive.useEffect((prev: number = -1) => {
+      const effectFn1 = (prev: number = -1) => {
         console.log("1", prev);
         expect(signal2()).toBe(prev + 1);
         return signal2();
-      });
-
-      reactive.useEffect((prev: number = -1) => {
+      };
+      const effectFn2 = (prev: number = -1) => {
         console.log("2");
         setSignal2((p) => p + 1);
         console.log("3");
         expect(signal()).toBe(prev + 1);
         return signal();
-      });
+      };
+      reactive.useEffect(effectFn1);
 
-      // setSignal(1);
+      reactive.useEffect(effectFn2);
+
+      setSignal(1);
+
+      jest.advanceTimersByTime(16);
+
+      timer(16).then(() => {
+        console.log("test test");
+        expect(effectFn1).toBeCalledTimes(3);
+        expect(effectFn2).toBeCalledTimes(2);
+        done();
+      });
+      jest.advanceTimersByTime(16);
     });
   });
 });
