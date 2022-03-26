@@ -1,3 +1,5 @@
+import Scheduler from "./Scheduler";
+
 export const IS_REACTIVE_READ = "IS_REACTIVE_READ";
 export const REACTIVE_EFFECTS = "REACTIVE_EFFECTS";
 
@@ -33,6 +35,13 @@ const isSetFunction = <T>(v: T | ((d: T) => T)): v is (d: T) => T => {
 //Publish–subscribe pattern
 class Reactive {
   private roots: IRoot[] = [];
+  private scheduler: Scheduler<IEffect<any>, any> = new Scheduler({
+    work: async (effect: IEffect) => {
+      const res = await effect.fn(effect.prev);
+      effect.prev = res;
+      return res;
+    },
+  });
   private root: IRoot = {
     effectCache: new Set<IEffect>(),
     effects: [],
@@ -101,7 +110,7 @@ class Reactive {
           if (root?.batch.pending) {
             root.batch.effects.add(effect);
           } else {
-            effect.prev = effect.fn(effect.prev);
+            this.scheduler.add(effect);
           }
           root?.effects.pop();
         });
@@ -199,7 +208,7 @@ class Reactive {
     fn();
     root && (root.batch.pending = false);
     root?.batch.effects.forEach((effect) => {
-      effect.prev = effect.fn(effect.prev);
+      this.scheduler.add(effect);
     });
     root?.batch.effects.clear();
   };
