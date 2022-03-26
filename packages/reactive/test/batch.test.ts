@@ -3,8 +3,12 @@ import timer from "./timer";
 
 const reactive = new Reactive();
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
 describe("batch test", () => {
-  test("test 1", () => {
+  test("test 1", (done) => {
     const [name, setName] = reactive.createSignal<string>();
     const [result, setResult] = reactive.createSignal<string | undefined>(
       name()
@@ -30,11 +34,13 @@ describe("batch test", () => {
       });
 
       jest.advanceTimersByTime(16);
-      timer(100).then(() => {
+      timer(16).then(() => {
         expect(effectFn).toBeCalledTimes(2);
         expect(result()).toBe(name2);
         expect(count).toBe(2);
+        done();
       });
+      jest.advanceTimersByTime(16);
     });
   });
 });
