@@ -8,7 +8,6 @@
   "repository": "git@github.com:idealjs/corn.git",
   "license": "MIT",
   "scripts": {
-    "test": "jest",
     "lint": "eslint **/*.ts* --fix",
     "postinstall": "lerna bootstrap"
   },
