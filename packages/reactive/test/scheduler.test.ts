@@ -13,12 +13,14 @@ beforeEach(() => {
 });
 
 describe("scheduler", () => {
-  test("scheduler", () => {
+  test("scheduler", (done) => {
     const callback = jest.fn();
     scheduler.add(callback);
     jest.advanceTimersByTime(16);
-    timer(0).then(() => {
+    timer(16).then(() => {
       expect(callback).toBeCalled();
+      done();
     });
+    jest.advanceTimersByTime(16);
   });
 });
