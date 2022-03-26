@@ -1,4 +1,5 @@
 import Reactive from "../src/Reactive";
+import timer from "./timer";
 
 const reactive = new Reactive();
 
@@ -11,10 +12,12 @@ describe("batch test", () => {
     reactive.createRoot(() => {
       let count = 0;
 
-      reactive.useEffect(() => {
+      const effectFn = jest.fn(() => {
         setResult(name());
         count = count + 1;
       });
+
+      reactive.useEffect(effectFn);
 
       expect(count).toBe(1);
 
@@ -26,8 +29,12 @@ describe("batch test", () => {
         setName(name2);
       });
 
-      expect(result()).toBe(name2);
-      expect(count).toBe(2);
+      jest.advanceTimersByTime(16);
+      timer(100).then(() => {
+        expect(effectFn).toBeCalledTimes(2);
+        expect(result()).toBe(name2);
+        expect(count).toBe(2);
+      });
     });
   });
 });
