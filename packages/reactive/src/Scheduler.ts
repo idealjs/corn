@@ -11,12 +11,17 @@ class Scheduler<T, R = unknown> {
     this.worker = worker;
   }
 
-  public async add(value: T) {
+  public add(value: T) {
     this.pending++;
     this.cache.add(value);
     if (!this.working) {
-      await this.work();
+      this.work();
     }
+  }
+
+  public remove(value: T) {
+    this.pending++;
+    this.cache.delete(value);
   }
 
   private async work() {
