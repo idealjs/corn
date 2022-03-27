@@ -1,30 +1,39 @@
 import Scheduler from "../src/Scheduler";
-import timer from "./timer";
+import waitUntil from "./waitUntil";
 
-const scheduler = new Scheduler<() => void, number>({
-  work: async (t) => {
-    t();
-    return 0;
-  },
-});
+let scheduler: Scheduler<() => void, void>;
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  scheduler = new Scheduler<() => void, void>({
+    work: async (t) => {
+      t();
+    },
+  });
+  jest.spyOn(global, "setTimeout");
 });
 
 describe("scheduler", () => {
-  test("scheduler", (done) => {
+  test("scheduler", async () => {
     const callback = jest.fn();
     scheduler.add(callback);
+    await waitUntil(() => {
+      return !scheduler.working;
+    });
+    expect(callback).toBeCalledTimes(1);
+    expect(setTimeout).toBeCalledTimes(1);
     jest.advanceTimersByTime(16);
-    timer(16)
-      .then(() => {
-        expect(callback).toBeCalled();
-        done();
-      })
-      .catch((err) => {
-        done(err);
-      });
-    jest.advanceTimersByTime(16);
+  });
+
+  test("scheduler add twice", async () => {
+    const callback = jest.fn();
+    scheduler.add(callback);
+    scheduler.add(callback);
+
+    await waitUntil(() => {
+      return !scheduler.working;
+    });
+
+    expect(setTimeout).toBeCalledTimes(3);
+    expect(callback).toBeCalledTimes(1);
   });
 });

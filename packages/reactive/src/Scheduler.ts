@@ -3,30 +3,30 @@ interface IWorker<T, R = unknown> {
 }
 
 class Scheduler<T, R = unknown> {
-  private cache: Array<T> = [];
-  private working: boolean = false;
+  private cache: Set<T> = new Set<T>();
+  private _working: boolean = false;
   private pending: number = 0;
   private worker: IWorker<T, R>;
   constructor(worker: IWorker<T, R>, values?: readonly T[] | null) {
     this.worker = worker;
   }
 
-  public add(value: T) {
+  public async add(value: T) {
     this.pending++;
-    this.cache.push(value);
+    this.cache.add(value);
     if (!this.working) {
-      this.work();
+      await this.work();
     }
   }
 
   private async work() {
-    this.working = true;
+    this._working = true;
     for (const value of this.cache) {
       await this.halt();
       await this.worker.work(value);
-      this.cache.shift();
+      this.cache.delete(value);
     }
-    this.working = false;
+    this._working = false;
   }
 
   private halt() {
@@ -35,18 +35,22 @@ class Scheduler<T, R = unknown> {
       if (this.pending !== 0) {
         setTimeout(async () => {
           if (pending === this.pending) {
-            pending = 0;
+            this.pending = 0;
             resolve();
           } else {
-            pending = this.pending;
             await this.halt();
-            return;
+            this.pending = 0;
+            resolve();
           }
         }, 16);
       } else {
         resolve();
       }
     });
+  }
+
+  public get working() {
+    return this._working;
   }
 }
 
