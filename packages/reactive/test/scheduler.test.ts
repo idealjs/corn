@@ -17,10 +17,14 @@ describe("scheduler", () => {
     const callback = jest.fn();
     scheduler.add(callback);
     jest.advanceTimersByTime(16);
-    timer(16).then(() => {
-      expect(callback).toBeCalled();
-      done();
-    });
+    timer(16)
+      .then(() => {
+        expect(callback).toBeCalled();
+        done();
+      })
+      .catch((err) => {
+        done(err);
+      });
     jest.advanceTimersByTime(16);
   });
 });

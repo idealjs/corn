@@ -34,12 +34,16 @@ describe("batch test", () => {
       });
 
       jest.advanceTimersByTime(16);
-      timer(16).then(() => {
-        expect(effectFn).toBeCalledTimes(2);
-        expect(result()).toBe(name2);
-        expect(count).toBe(2);
-        done();
-      });
+      timer(16)
+        .then(() => {
+          expect(effectFn).toBeCalledTimes(2);
+          expect(result()).toBe(name2);
+          expect(count).toBe(2);
+          done();
+        })
+        .catch((err) => {
+          done(err);
+        });
       jest.advanceTimersByTime(16);
     });
   });
