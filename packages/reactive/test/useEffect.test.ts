@@ -1,65 +1,54 @@
 import Reactive from "../src/Reactive";
-import timer from "./timer";
+import waitUntil from "./waitUntil";
 
-const reactive = new Reactive();
+let reactive: Reactive;
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  reactive = new Reactive();
 });
 
 describe("useEffect number", () => {
-  test("number signal + effect times", (done) => {
+  test("number signal + effect times", async () => {
     const [signal, setSignal] = reactive.createSignal<number>(0);
+    let times = 0;
+    const effectFn = jest.fn(() => {
+      expect(signal()).toBe(times);
+      times++;
+    });
+
     reactive.createRoot(() => {
-      let times = 0;
-      const effectFn = jest.fn(() => {
-        expect(signal()).toBe(times);
-        times++;
-      });
       reactive.useEffect(effectFn);
       setSignal(times);
-      jest.advanceTimersByTime(16);
-
-      timer(16)
-        .then(() => {
-          expect(effectFn).toBeCalledTimes(2);
-          expect(times).toBe(2);
-          done();
-        })
-        .catch((err) => {
-          done(err);
-        });
-      jest.advanceTimersByTime(16);
     });
+
+    await waitUntil(() => {
+      return !reactive["scheduler"].working;
+    });
+
+    expect(effectFn).toBeCalledTimes(2);
+    expect(times).toBe(2);
   });
 });
 
 describe("useEffect array number", () => {
-  test("array number signal function + effect times", (done) => {
+  test("array number signal function + effect times", async () => {
     const [signal, setSignal] = reactive.createSignal<number[]>([0]);
-    reactive.createRoot(() => {
-      let times = [0];
-      const effectFn = jest.fn(() => {
-        expect(signal()).toStrictEqual(times);
-        times = times.concat(times.length);
-      });
-      reactive.useEffect(effectFn);
-
-      setSignal(times);
-      jest.advanceTimersByTime(16);
-
-      timer(16)
-        .then(() => {
-          console.log("test test");
-          expect(effectFn).toBeCalledTimes(2);
-          expect(times.length).toBe(3);
-          done();
-        })
-        .catch((err) => {
-          done(err);
-        });
-      jest.advanceTimersByTime(16);
+    let times = [0];
+    const effectFn = jest.fn(() => {
+      expect(signal()).toStrictEqual(times);
+      times = times.concat(times.length);
     });
+
+    reactive.createRoot(() => {
+      reactive.useEffect(effectFn);
+      setSignal(times);
+    });
+
+    await waitUntil(() => {
+      return !reactive["scheduler"].working;
+    });
+    expect(effectFn).toBeCalledTimes(2);
+    expect(times.length).toBe(3);
   });
 });
 
@@ -79,43 +68,32 @@ describe("useEffect obj", () => {
 });
 
 describe("useEffect number set get", () => {
-  test("number signal", (done) => {
+  test("number signal", async () => {
     const [signal, setSignal] = reactive.createSignal<number>(0);
     const [signal2, setSignal2] = reactive.createSignal<number>(0);
 
-    reactive.createRoot(() => {
-      const effectFn1 = jest.fn((prev: number = -1) => {
-        console.log("1", prev);
-        expect(signal2()).toBe(prev + 1);
-        return signal2();
-      });
-      const effectFn2 = jest.fn((prev: number = -1) => {
-        console.log("2");
-        setSignal2((p) => p + 1);
-        console.log("3");
-        expect(signal()).toBe(prev + 1);
-        return signal();
-      });
-      reactive.useEffect(effectFn1);
+    const effectFn1 = jest.fn((prev: number = -1) => {
+      expect(signal2()).toBe(prev + 1);
+      return signal2();
+    });
+    const effectFn2 = jest.fn((prev: number = -1) => {
+      setSignal2((p) => p + 1);
+      expect(signal()).toBe(prev + 1);
+      return signal();
+    });
 
+    reactive.createRoot(() => {
+      reactive.useEffect(effectFn1);
       reactive.useEffect(effectFn2);
 
       setSignal(1);
-
-      jest.advanceTimersByTime(16);
-
-      timer(16)
-        .then(() => {
-          console.log("test test");
-          expect(effectFn1).toBeCalledTimes(3);
-          expect(effectFn2).toBeCalledTimes(2);
-          done();
-        })
-        .catch((err) => {
-          done(err);
-        });
-
-      jest.advanceTimersByTime(16);
     });
+
+    await waitUntil(() => {
+      return !reactive["scheduler"].working;
+    });
+
+    expect(effectFn1).toBeCalledTimes(3);
+    expect(effectFn2).toBeCalledTimes(2);
   });
 });

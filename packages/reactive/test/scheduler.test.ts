@@ -21,7 +21,6 @@ describe("scheduler", () => {
     });
     expect(callback).toBeCalledTimes(1);
     expect(setTimeout).toBeCalledTimes(1);
-    jest.advanceTimersByTime(16);
   });
 
   test("scheduler add twice", async () => {
