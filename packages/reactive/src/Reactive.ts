@@ -170,7 +170,7 @@ class Reactive {
       }
     };
 
-    root?.signals.push({
+    (root || this.root)?.signals.push({
       read,
       write: write,
       effects,
