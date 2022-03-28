@@ -59,19 +59,23 @@ describe("global signal, nested useEffect", () => {
     const name1 = "world";
     const name2 = "world world";
 
-    const effectInner = jest.fn(() => {
-      name();
-      count = count + 1;
-    });
+    const effectInner = jest
+      .fn(() => {
+        name();
+        count = count + 1;
+      })
+      .mockName("effectInner");
 
-    const effectOuter = jest.fn(() => {
-      clean && clean();
-      name();
-      reactive.createRoot((dispose) => {
-        clean = dispose;
-        reactive.useEffect(effectInner);
-      });
-    });
+    const effectOuter = jest
+      .fn(() => {
+        clean && clean();
+        name();
+        reactive.createRoot((dispose) => {
+          clean = dispose;
+          reactive.useEffect(effectInner);
+        });
+      })
+      .mockName("effectOuter");
 
     const testCase = async () => {
       setName(name1);
@@ -99,34 +103,5 @@ describe("global signal, nested useEffect", () => {
           done(err);
         });
     });
-  });
-
-  // test("nested root useEffect", () => {
-  //   reactive.createRoot(() => {
-  //     const [name, setName] = reactive.createSignal<string>();
-  //     let count = 0;
-  //     let clean: Function;
-  //     reactive.useEffect(() => {
-  //       clean && clean();
-  //       name();
-  //       reactive.createRoot((dispose) => {
-  //         clean = dispose;
-  //         reactive.useEffect(() => {
-  //           name();
-  //           count = count + 1;
-  //         });
-  //       });
-  //     });
-
-  //     expect(count).toBe(1);
-
-  //     const name1 = "world";
-  //     setName(name1);
-  //     expect(count).toBe(2);
-
-  //     const name2 = "world world";
-  //     setName(name2);
-  //     expect(count).toBe(3);
-  //   });
-  // });
+  }, 20000);
 });
