@@ -61,8 +61,8 @@ class Reactive {
 
   private cleanEffects(root: IRoot) {
     root.effectCache.forEach((effect) => {
+      this.scheduler.remove(effect);
       this.root.signals.forEach((signal) => {
-        this.scheduler.remove(effect);
         signal.effects.delete(effect);
       });
     });
