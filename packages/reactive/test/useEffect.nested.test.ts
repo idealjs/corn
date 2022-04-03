@@ -104,4 +104,62 @@ describe("global signal, nested useEffect", () => {
         });
     });
   }, 20000);
+
+  test("global signal, nested root/useEffect, effect return value", (done) => {
+    const [name, setName] = reactive.createSignal<string>();
+    let count = 0;
+    let clean: Function;
+    const name1 = "world";
+    const name2 = "world world";
+
+    const effectInner = jest
+      .fn(() => {
+        name();
+        count = count + 1;
+        return count;
+      })
+      .mockName("effectInner");
+
+    const effectOuter = jest
+      .fn((prev?: number) => {
+        console.log("test test", prev);
+        clean && clean();
+        name();
+        if (prev === 2) {
+          return 0;
+        }
+        return reactive.createRoot((dispose) => {
+          clean = dispose;
+          return reactive.useEffect(effectInner);
+        });
+      })
+      .mockName("effectOuter");
+
+    const testCase = async () => {
+      setName(name1);
+      await waitUntil(() => {
+        return !reactive["scheduler"].working;
+      });
+      expect(effectOuter).toBeCalledTimes(2);
+      expect(effectInner).toBeCalledTimes(2);
+
+      setName(name2);
+      await waitUntil(() => {
+        return !reactive["scheduler"].working;
+      });
+      expect(effectOuter).toBeCalledTimes(3);
+      expect(effectInner).toBeCalledTimes(2);
+    };
+
+    reactive.createRoot(() => {
+      reactive.useEffect(effectOuter);
+      testCase()
+        .then(() => {
+          done();
+        })
+        .catch((err) => {
+          done(err);
+        });
+    });
+  }, 20000);
 });
