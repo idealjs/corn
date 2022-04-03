@@ -108,7 +108,6 @@ describe("global signal, nested useEffect", () => {
   test("global signal, nested root/useEffect, effect return value", (done) => {
     const [name, setName] = reactive.createSignal<string>();
     let count = 0;
-    let clean: Function;
     const name1 = "world";
     const name2 = "world world";
 
@@ -122,14 +121,11 @@ describe("global signal, nested useEffect", () => {
 
     const effectOuter = jest
       .fn((prev?: number) => {
-        console.log("test test", prev);
-        clean && clean();
         name();
-        if (prev === 2) {
-          return 0;
+        if (prev != null && prev >= 1) {
+          return 2;
         }
-        return reactive.createRoot((dispose) => {
-          clean = dispose;
+        return reactive.createRoot(() => {
           return reactive.useEffect(effectInner);
         });
       })
@@ -148,7 +144,7 @@ describe("global signal, nested useEffect", () => {
         return !reactive["scheduler"].working;
       });
       expect(effectOuter).toBeCalledTimes(3);
-      expect(effectInner).toBeCalledTimes(2);
+      expect(effectInner).toBeCalledTimes(3);
     };
 
     reactive.createRoot(() => {
