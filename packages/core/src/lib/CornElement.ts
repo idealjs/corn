@@ -1,5 +1,5 @@
 import { IS_REACTIVE_READ, ReadFunction } from "@idealjs/corn-reactive";
-import { h, VNode } from "snabbdom";
+import { h, Key, VNode } from "snabbdom";
 
 import { createRoot, useEffect } from "./reactive";
 import { patch } from "./render";
@@ -24,6 +24,7 @@ export const CORN_ELEMENT_KEY = "CORN_ELEMENT_KEY";
 
 export interface Props extends IEvents {
   children?: Child | Child[];
+  key?: Key;
 }
 
 const handleChildren = (children: Child[]): VNode[] => {
@@ -37,46 +38,32 @@ const handleChildren = (children: Child[]): VNode[] => {
       }
       if (child instanceof Function) {
         if (Reflect.getOwnPropertyDescriptor(child, IS_REACTIVE_READ)?.value) {
-          let clean: () => void;
-          const effectFn = (prev?: VNode) => {
-            clean && clean();
+          const handleChildEffectFn = (prev?: VNode) => {
             const res = child();
-            console.debug("[debug] effectFn res", res);
+            console.debug("[debug] effectFn res", res, prev);
             if (isCornText(res)) {
               if (prev == null) {
-                return createRoot((dispose) => {
-                  const vNode = h("div", [res.toString()]);
-                  clean = dispose;
-                  return vNode;
-                });
+                const vNode = h("div", [res.toString()]);
+                return vNode;
               } else {
-                return createRoot((dispose) => {
-                  const vNode = h("div", [res.toString()]);
-                  clean = dispose;
-                  return patch(prev, vNode);
-                });
+                const vNode = h("div", [res.toString()]);
+                return patch(prev, vNode);
               }
             }
             if (res instanceof Array) {
               if (prev == null) {
-                return createRoot((dispose) => {
-                  const resChildren = handleChildren(res);
-                  const vNode = h("div", resChildren);
-                  clean = dispose;
-                  return vNode;
-                });
+                const resChildren = handleChildren(res);
+                const vNode = h("div", resChildren);
+                return vNode;
               } else {
-                return createRoot((dispose) => {
-                  const resChildren = handleChildren(res);
-                  const vNode = h("div", resChildren);
-                  clean = dispose;
-                  return patch(prev, vNode);
-                });
+                const resChildren = handleChildren(res);
+                const vNode = h("div", resChildren);
+                return patch(prev, vNode);
               }
             }
             console.warn("[warn] skip create res", res, typeof res);
           };
-          return useEffect<VNode | undefined>(effectFn);
+          return useEffect<VNode | undefined>(handleChildEffectFn);
         }
       }
       if (child instanceof Array) {
@@ -96,20 +83,35 @@ class CornElement {
     this.props = props;
   }
 
-  public create(): VNode {
-    if (this.type instanceof Function) {
-      const cornElement = this.type(this.props);
-      const vNode = cornElement.create();
+  public create(withRoot: boolean = true): VNode {
+    const effectFn = (prev?: VNode) => {
+      if (this.type instanceof Function) {
+        if (prev != null) {
+          return prev;
+        }
+        const cornElement = this.type(this.props);
+        const vNode = cornElement.create(false);
+
+        return vNode;
+      }
+
+      const children = handleChildren([this.props.children].flatMap((c) => c));
+
+      const vNode = h(
+        this.type,
+        { ...this.props, on: { click: this.props.onClick } },
+        children
+      );
 
       return vNode;
+    };
+    if (withRoot) {
+      return createRoot(() => {
+        return useEffect(effectFn);
+      });
+    } else {
+      return useEffect(effectFn);
     }
-    const children = handleChildren([this.props.children].flatMap((c) => c));
-    const vNode = h(
-      this.type,
-      { ...this.props, on: { click: this.props.onClick } },
-      children
-    );
-    return vNode;
   }
 }
 
